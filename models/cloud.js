@@ -96,7 +96,6 @@ function getDeviceList(callback) {
                         callback(null, result);
                     }
                 });
-                callback(null, result);
             }
         })
     } else {

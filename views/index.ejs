@@ -1,35 +1,58 @@
 ﻿<%- include page/header %>
-<!--<div class="bs-example">
-    <div class="alert alert-warning alert-dismissible" role="alert">
-      <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-      <strong>Warning!</strong> Better check yourself, you're not looking too good.
-    </div>
-  </div>-->
 
-                    <div class="top-bg">
-					</div>
-					<% if(user.enable === false) { %>
-						<div class="alert alert-danger" role="alert">
-						  	<strong>Waring!</strong> <a href="#" class="alert-link"> Your account is not enabled!</a> Please announce the system administrator.
-						</div>
-                    <% } else { %>
-						<table id="table1"  class="display" cellspacing="0" width="100%">
-							<thead>
-								<tr style="color:#428bca">
-									<th>MAC Address</th>
-									<th>Device ID</th>
-									<th>Date</th>
-									<th>Time</th>
-									<th>Service ID</th>
-									<th>Service Name</th>
-									<th>Package Length</th>
-									<th>Byte 0</th>
-									<th>Byte 1</th>
-								</tr>
-							</thead>
-						</table>
 
-					<% } %>
+      <div class="col-sm-12 col-md-4">
+        <div class="BG-Average">
+	          <nav class="navbar bg-faded btn-menu">
+	            <button type="button" class="btn btn-all btn-block" disabled>
+	              全部區域
+	            </button>
+	            <!--<img src="/data/600018691/2018071116.jpg" width="480" height="400">-->
+	            <img v-bind:src="'/data/600018691/'+ sImg" width="480" height="400">
+	          </nav>
+	          <div id="slider"></div>
+	          <br>
+              <div class="btn-group">
+                <button  type="button" class="btn" @click="backStart">
+					  <span class="fa fa-fast-backward fa-4x"></span>
+				</button>
+				  <button  type="button" class="btn" @click="stopPlay">
+					  <span class="fa fa-pause fa-4x"></span>
+				  </button>
+				  <button  type="button" class="btn" @click="playImg">
+					 <span class="fa fa-play fa-4x"></span>
+				  </button>
+
+			  </div>
+        </div>
+      </div><!--/.col-->
+      <div class="col-sm-12 col-md-8 ">
+        <div class="BG-Average-Copy">
+          <div v-show="isChart">
+              {{isChart}}
+          </div>
+          <div v-show="!isChart">
+            <table id="table1"  class="display" cellspacing="0" width="100%">
+				<thead>
+					<tr style="color:#428bca">
+						<th>MAC Address</th>
+						<th>Device ID</th>
+						<th>Date</th>
+						<th>Time</th>
+						<th>Service ID</th>
+						<th>Service Name</th>
+						<th>Package Length</th>
+						<th>Byte 0</th>
+						<th>Byte 1</th>
+					</tr>
+				</thead>
+			</table>
+          </div>
+        </div>
+      </div>
+
+
+
 					<input id="camList" name="camList" type="hidden" value="<%= JSON.stringify(camList) %>">
 					<!-- （Modal） -->
 					<div class="modal fade" id="myModal" tabindex="-1" role="dialog"

@@ -13,15 +13,61 @@ var range;
 var camList = JSON.parse(document.getElementById("camList").value);
 var cam1 = camList[0]['gid'];
 // var camList = document.getElementById("camList").value;
+var tmpImg = '2018071100.jpg';
+var min = 0;
+var max = 12;
+var value = 0;
+var arr = ['2018071100.jpg',
+           '2018071101.jpg',
+           '2018071102.jpg',
+           '2018071103.jpg',
+           '2018071104.jpg',
+           '2018071107.jpg',
+           '2018071109.jpg',
+           '2018071114.jpg',
+           '2018071116.jpg',
+           '2018071120.jpg',
+           '2018071121.jpg',
+           '2018071122.jpg',
+           '2018071123.jpg'];
 // console.log(camList);
+
+
 var app = new Vue({
   el: '#app',
   data: {
     camList: camList,
     selectedCam: cam1,
-    test: false
+    isChart: true,
+    sImg : tmpImg,
+    pageTimer: {}
+  },
+  methods: {
+    backStart: function () {
+      value = 0;
+      setSliderValue(value);
+      this.sImg = arr[value];
+      console.log(this.sImg);
+    },
+    playImg: function () {
+      const self = this;
+      this.pageTimer["timer1"] = setInterval(function(){
+          ++value;
+          if (value > 12) {
+            value = 0;
+          }
+          setSliderValue(value);
+          self.sImg = arr[value];
+          console.log(this.sImg);
+      },600);
+    },
+    stopPlay: function () {
+      clearInterval(this.pageTimer["timer1"]);
+    }
   }
 })
+
+
 var opt2={
    dom: 'lrtip',
    //"order": [[ 2, "desc" ]],
@@ -58,33 +104,22 @@ function search(){
 
 function refresh(){
   //alert('refresh');
-  toQuery();
+  //toQuery();
+  // alert(isHasImg('2018071100.jpg'));
 }
 
-function disableBtn() {
-    //document.getElementById("BTN").disabled = true;
-    //document.getElementById("BTN2").disabled = true;
-    $('#BTN').attr('disabled', true);
-    $('#BTN2').attr('disabled', true);
-    $('#startDate').attr('disabled', true);
-    $('#endDate').attr('disabled', true);
-    $('#startDate').val('');
-    $('#endDate').val('');
+function isHasImg(pathImg){
+    pathImg = 'http://localhost:3000/data/600018691/' + pathImg;
+    var ImgObj=new Image();
+    ImgObj.src= pathImg;
+     if(ImgObj.fileSize > 0 || (ImgObj.width > 0 && ImgObj.height > 0))
+     {
+       return true;
+     } else {
+       return false;
+    }
 }
 
-function enableBtn() {
-    //document.getElementById("BTN").disabled = false;
-    //document.getElementById("BTN2").disabled = false;
-    $('#BTN').attr('disabled', false);
-    $('#BTN2').attr('disabled', false);
-    $('#startDate').attr('disabled', false);
-    $('#endDate').attr('disabled', false);
-}
-
-function disableMac() {
-    //document.getElementById("mac").disabled = true;
-    $('#mac').attr('disabled', true);
-}
 
 function enableMac() {
     //document.getElementById("mac").disabled = false;
@@ -208,6 +243,15 @@ function toShowDevice(list){
   }
 }
 
+function setSliderValue(value) {
+  $( "#slider" ).slider({
+      min: min,
+      max: max,
+      value: value,
+    });
+
+}
+
 function getMac(item){
   //console.log('getMac :\n'+JSON.stringify(item));
   var tmp = item.mac +' - '+item.name;
@@ -220,6 +264,7 @@ $(document).ready(function(){
         var mUrl = 'http://'+host+":"+port+'/todos/device_list';
         loadDoc("device_list",mUrl)
     }, 3000);  */
+    setSliderValue(500);
 
     cal1 =new Calendar({
         inputField: "startDate",
@@ -241,39 +286,6 @@ $(document).ready(function(){
         onSelect: function() {this.hide();}
     });
 
-   /*$('#input-1').iCheck({
-    checkboxClass: 'icheckbox_flat-red',
-    radioClass: 'iradio_flat-red'
-  });
-   $('#input-2').iCheck({
-    checkboxClass: 'icheckbox_flat-red',
-    radioClass: 'iradio_flat-red'
-    });
-
-  $('#input-1').on('ifToggled', function(event){
-
-      if( $("#input-1").prop("checked") ) {
-         //alert('input-1 ifToggled checked');
-         enableBtn();
-       } else {
-         //alert('input-1 ifToggled unchecked');
-         disableBtn();
-       }
-  });
-
-  $('#input-2').on('ifToggled', function(event){
-
-      if( $("#input-2").prop("checked") ) {
-         //alert('input-2 ifToggled checked');
-         enableMac();
-       } else {
-         //alert('input-2 ifToggled unchecked');
-         disableMac();
-       }
-
-  });*/
-  //disableBtn();
-  //disableMac();
   hidePaging();
 });
 
