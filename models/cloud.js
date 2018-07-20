@@ -1,4 +1,5 @@
 var request = require('request');
+var async = require('async');
 var settings = require('../settings');
 var fs = require('fs');
 var JsonFileTools =  require('./jsonFileTools.js');
@@ -52,27 +53,63 @@ function getToken(callback) {
     });
 }
 
-function download (uri, filename){
+function download (uri, filename, callback){
     request.head(uri, function(err, res, body){
-      if (err) callback(err, filename);
+      if (err)
+          console.log('download err : ' + err);
       else {
           var stream = request(uri);
           stream.pipe(
               fs.createWriteStream(filename)
                   .on('error', function(err){
                       //callback(error, filename);
-                      stream.read();
+                      console.log('???? fs.createWriteStream err')
+                      console.log(err)
+                      // stream.read();
                   })
               )
           .on('close', function() {
-              // callback(null, filename);
+              callback(null, filename);
           });
       }
     });
   };
 
-function getDeviceList(callback) {
+
+function checkAndGetToken(callback) {
     var mySession = JsonFileTools.getJsonFromFile(sessionPath);
+    var hasExpiration = false;
+    if(mySession && mySession.expiration) {
+        var d = new Date(mySession.expiration);//UTC
+        //console.log(d.getTime());
+        var now = new Date();
+        //console.log(now.getTime());
+        hasExpiration = true;
+    }
+
+    if (hasExpiration == false || now.getTime() > d.getTime()) {
+        getToken(function(err, result){
+            if(err){
+                JsonFileTools.saveJsonToFile(sessionPath,{});
+                callback(err, null);
+            }else{
+                JsonFileTools.saveJsonToFile(sessionPath,result);
+                sendDeviceListRequest(result, function(err, result){
+                    if(err){
+                        callback(err, null);
+                    } else {
+                        callback(null, result);
+                    }
+                });
+            }
+        })
+    } else {
+        callback(null, mySession);
+    }
+}
+
+function getDeviceList(callback) {
+    /*var mySession = JsonFileTools.getJsonFromFile(sessionPath);
     var hasExpiration = false;
     if(mySession && mySession.expiration) {
         var d = new Date(mySession.expiration);//UTC
@@ -106,7 +143,20 @@ function getDeviceList(callback) {
                 callback(null, result);
             }
         });
-    }
+    }*/
+    checkAndGetToken(function(err, session) {
+        if (err) {
+            callback(err, null);
+        } else {
+            sendDeviceListRequest(session, function(err, result){
+                if(err){
+                    callback(err, null);
+                } else {
+                    callback(null, result);
+                }
+            }); 
+        }
+    })
 }
 
 function sendDeviceListRequest(session, callback) {
@@ -139,30 +189,42 @@ function sendDeviceListRequest(session, callback) {
 
 function getEventList(gid, endTime, callback) {
     var url = server + settings.get_event_list;
-    var session = JsonFileTools.getJsonFromFile(sessionPath);
-    var token = session.token;
-    var form = { token:token, device_id: gid,end_time: endTime,range: "DAY", detail:true};
-    request.post(url,{form:form},
-        function(err, result) {
-            if(err) {
-                callback(err, null);
-            }
-            else {
-                //console.log('flag : '+flag);
-                //console.log('body type : '+typeof(result.body));
-                var body= JSON.parse(result.body);
-                //console.log(JSON.stringify(body));
-                var status = body.status;
-                var list = body.event_list;
-                console.log('list : ' + JSON.stringify(list));
+    checkAndGetToken(function(err, session) {
+        if (err) {
+            call(err, null);
+        } else {
+            var token = session.token;
+            // request time range “HOUR”, “DAY”, “WEEK”, “MONTH”
+            // default: “DAY”
 
-                if(status.code !== 1232){
-                    callback(status.message, null);
-                } else {
-                    callback(null, list);
-                }
-            }
-    });
+            var form = { token:token, device_id: gid,end_time: endTime,range: "DAY", detail:true};
+            console.log('getEventList : ' + form);
+            request.post(url,{form:form},
+                function(err, result) {
+                    if(err) {
+                        console.log('getEventList  request.post error : ' + err);
+                        callback(err, null);
+                    }
+                    else {
+                        //console.log('flag : '+flag);
+                        //console.log('body type : '+typeof(result.body));
+                        var body= JSON.parse(result.body);
+                        //console.log(JSON.stringify(body));
+                        var status = body.status;
+                        var list = body.event_list;
+                        // console.log('list : ' + JSON.stringify(list));
+        
+                        if(status.code !== 1232){
+                            console.log('getEventList  request.post : ' + status.message);
+                            callback(status.message, null);
+                        } else {
+                            console.log('getEventList  request.post : ' + list.length);
+                            callback(null, list);
+                        }
+                    }
+            }); 
+        }
+    })
 }
 
 function store(title, content, city,area,town,callback) {
@@ -215,24 +277,65 @@ function toStr(value) {
 }
 
 function getPlayList(gid, endDate, callback) {
-    var folderPath = './public/data/'+gid;
-    JsonFileTools.mkdir(folderPath);
-
     getEventList(gid, endDate, function(err,list){
         if (err) {
             callback(err, null);
         } else {
-            for (let i=0; i < list.length; ++i) {
+            /*for (let i=0; i < list.length; ++i) {
                 let obj = list[i];
                 let clip = obj.clips;
                 let name = getTimeName(obj.time);
                 console.log(clip[0]);
                 name = folderPath + '/'+ name + '.jpg';
                 download(clip[0], name);
-            }
+            }*/
+            asyncDownloadImage (gid, list, function(err, result){
+                if(err)
+                    console.log('???? asyncDownloadImage err : ' + err);
+                else
+                    console.log('???? asyncDownloadImage : ' + result);
+            })
             callback(null, list);
         }
     });
+}
+
+function asyncDownloadImage (gid, list, callback) {
+    var folderPath = './public/data/'+gid;
+    JsonFileTools.mkdir(folderPath);
+    let length = list.length;
+    if (length == 0) {
+        callback('no event list', null);
+    }
+    let index = 0;
+    async.forever(function(next){
+        let obj = list[index];
+        let clip = obj.clips;
+        let name = getTimeName(obj.time);
+        if (gid == '600018691')
+            console.log(clip[0]);
+        name = folderPath + '/'+ name + '.jpg';
+        
+        download(clip[0], name, function(err, result){
+
+            if ( (list.length-1) === index) {
+              err = 'finish';//If has err
+            } else {
+                ++index;
+            }
+            next(err);
+            if(err === 'finish') {
+              callback(null , 'downlod finished');
+            } else if(err) {
+              callback(err, null);
+            }
+        });
+
+      }, function(err){
+          console.log('error!!!');
+          console.log(err);
+      });
+
 }
 
 function query(mac, startDate, endDate , index, limit, flag, callback) {

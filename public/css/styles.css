@@ -955,12 +955,13 @@ input[type=checkbox] {
 	padding: 13px 10px;
 }
 .BG-Average-Copy {
-width: auto;
-height: 660px;
-border-radius: 10px;
-background-color: #ffffff;
-padding: 11px 16px 12px 17px;
+	width: auto;
+	height: auto;
+	border-radius: 10px;
+	background-color: #f8f5f5;
+	padding: 11px 16px 12px 17px;
 }
+
 /* logo出现动画 */
 @-webkit-keyframes fadeInDown{0%{opacity:0;-webkit-transform:translate3d(0,-100%,0);transform:translate3d(0,-100%,0)}100%{opacity:1;-webkit-transform:none;transform:none}}
 @keyframes fadeInDown{0%{opacity:0;-webkit-transform:translate3d(0,-100%,0);

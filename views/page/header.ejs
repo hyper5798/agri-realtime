@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="300; url=/">
+<!--<meta http-equiv="refresh" content="300; url=/">-->
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><%= title%></title>
 <%- include include_style.ejs %>
@@ -18,7 +18,7 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" href="\"><span>Sakura</span>Admin</a>
+				<a class="navbar-brand" href="\"><span>Agri</span>Demo</a>
 				<% if(user){ %>
 					<ul class="user-menu">
 						<li class="dropdown pull-right">
@@ -45,7 +45,7 @@
 		<% }else{ %>
 			<li>
 		<% } %>
-			<a href="/"><span class="fa fa-home"></span>  Node Status</a></li>
+			<a href="/"><span class="fa fa-home"></span>  動態顯示數據圖表</a></li>
 		<% if(user.level === 0){ %>
 			<% if(title ==='Account'){ %>
 				<li class="active">
@@ -72,33 +72,28 @@
 						</div>-->
 						<div class="row">
 						  <div class="col-sm-2 pull-left">
-						  	<font color="blue"><label id="mTitle"> Node Status</label></font>
+						  	<font color="blue"><label id="mTitle"> 動態顯示數據圖表</label></font>
 						  </div>
 						  <div class="col-sm-2 pull-left">
-						  	<font color="red"><label id="alert"></label></font>
+						  	<font color="red">{{alert}}</label></font>
 						  </div>
-						  <div class="col-sm-1">
-							    <select name="codici_transazioni" class="selectpicker pull-right" id="codici_transazioni" onchange="find()">
-							    </select>
-						  </div>
-						  <div class="col-sm-1" >
-						        <font color="blue"><label id="lblTotalPage"> / 16</label></font>
-						  </div>
-						  <div class="col-sm-1">
+						  <div class="col-md-1 col-sm-2">
 								<button  type="button" name="search" title="search" onClick="search()">
 								    <span class="fa fa-search fa-2x"></span>
+								    查詢
 								</button>
 						   </div>
-						  <div class="col-sm-1">
-							    <button  type="button" name="refresh" title="Refresh" onClick="refresh()">
-								    <span class="fa fa-refresh fa-2x"></span>
+						  <div class="col-md-1 col-sm-2">
+							    <button  type="button" @click="enableSetting">
+								    <span class="fa fa-pencil fa-2x"></span>
+									設定
 								</button>
 						  </div>
-						  <div class="col-sm-1">
+						  <div v-show="isShowCSV" class="col-sm-1">
 						        <div id="buttons"></div>
 						  </div>
 
-						   <div class="col-sm-2"></div>
+						   <div class="col-sm-4"></div>
 						</div>
                         <hr>
 

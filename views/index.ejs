@@ -4,56 +4,103 @@
       <div class="col-sm-12 col-md-4">
         <div class="BG-Average">
 	          <nav class="navbar bg-faded btn-menu">
-	            <button type="button" class="btn btn-all btn-block" disabled>
-	              全部區域
+	            <button type="button" class="btn btn-success btn-all btn-block" disabled>
+	              {{selectedCamName}} <==> {{selectedSensorName}}
 	            </button>
 	            <!--<img src="/data/600018691/2018071116.jpg" width="480" height="400">-->
-	            <img v-bind:src="'/data/600018691/'+ sImg" width="480" height="400">
+	            <img v-bind:src="sImg" width="100%">
 	          </nav>
 	          <div id="slider"></div>
 	          <br>
               <div class="btn-group">
                 <button  type="button" class="btn" @click="backStart">
-					  <span class="fa fa-fast-backward fa-4x"></span>
-				</button>
-				  <button  type="button" class="btn" @click="stopPlay">
-					  <span class="fa fa-pause fa-4x"></span>
-				  </button>
-				  <button  type="button" class="btn" @click="playImg">
-					 <span class="fa fa-play fa-4x"></span>
-				  </button>
-
-			  </div>
+									<span class="fa fa-fast-backward fa-4x"></span>
+								</button>
+								<button  type="button" class="btn" @click="stopPlay">
+									<span class="fa fa-pause fa-4x"></span>
+								</button>
+								<button  type="button" class="btn" @click="playImg">
+									<span class="fa fa-play fa-4x"></span>
+								</button>
+			        </div>
+							<h3><font color="blue">{{eventDate}}</font></h3>
         </div>
       </div><!--/.col-->
-      <div class="col-sm-12 col-md-8 ">
+      <div class="col-sm-12 col-md-8">
         <div class="BG-Average-Copy">
-          <div v-show="isChart">
-              {{isChart}}
-          </div>
-          <div v-show="!isChart">
-            <table id="table1"  class="display" cellspacing="0" width="100%">
-				<thead>
-					<tr style="color:#428bca">
-						<th>MAC Address</th>
-						<th>Device ID</th>
-						<th>Date</th>
-						<th>Time</th>
-						<th>Service ID</th>
-						<th>Service Name</th>
-						<th>Package Length</th>
-						<th>Byte 0</th>
-						<th>Byte 1</th>
-					</tr>
-				</thead>
-			</table>
-          </div>
+				<!-- Profile setting -->
+				  <div v-show="isSetting">
+					  <h1>IPCAM設定</h1>
+						<label>選擇IPCAM :</label>
+						<select v-model="selectedCam" @change="selectProfileCam">
+							<option v-for="cam in camList" v-bind:value="cam.gid">
+								{{ cam.name }}
+							</option>
+						</select>
+						<br>
+						<br>
+						<div id="test" style="width:800px">
+						</div>
+						<br>
+						<br>
+						<div class="row">
+							<div class="col-md-6"></div>
+							<div class="col-sm-2">
+								<button  type="button" @click="cancelSetting">
+								    <span class="fa fa-times fa-3x"></span>
+								    取消
+								</button>
+						  </div>
+						  <div class="col-sm-2">
+							    <button  type="button" class="btn btn-primary" @click="setting">
+								    <span class="fa fa-pencil fa-2x"></span>
+									  設定
+								</button>
+						  </div>
+						</div>
+					</div>
+					<div v-show="!isSetting">
+						<div v-show="isChart">
+							<ul v-show="hasTab" class="nav nav-tabs">
+			　　　　　　<li v-for="(item,$index) in items" @click="selectStyle (item, $index) " :class="{'active':$index==0}" >
+			              <a v-bind:href="'#'+item" @click="showTab">
+										{{item}} 
+										</a>
+			　　　　　　</li>
+			　　　　 </ul>
+              <div style="width:90%;">
+								<canvas id="canvas"></canvas>
+							</div>
+							<br>
+							<br>
+							<h3><font color="blue">{{eventData}}</font></h3>
+						</div>
+						<div v-show="!isChart">
+							<table id="table1"  class="display" cellspacing="0" width="100%">
+								<thead>
+									<tr style="color:#428bca">
+										<th>MAC Address</th>
+										<th>Device ID</th>
+										<th>Date</th>
+										<th>Time</th>
+										<th>Service ID</th>
+										<th>Service Name</th>
+										<th>Package Length</th>
+										<th>Byte 0</th>
+										<th>Byte 1</th>
+									</tr>
+								</thead>
+							</table>
+						</div>
+					</div>
         </div>
       </div>
 
 
 
 					<input id="camList" name="camList" type="hidden" value="<%= JSON.stringify(camList) %>">
+					<input id="sensorList" name="sensorList" type="hidden" value="<%= JSON.stringify(sensorList) %>">
+					<input id="profile" name="profile" type="hidden" value="<%= JSON.stringify(profile) %>">
 					<!-- （Modal） -->
 					<div class="modal fade" id="myModal" tabindex="-1" role="dialog"
 						aria-labelledby="myModalLabel" aria-hidden="true">
@@ -74,18 +121,25 @@
                                         <label>From :</label>
 										<input type="text" id="startDate" name="startDate" size="10"  readonly>
 										<input type="button" value="..." id="BTN" name="BTN"><br>
-                                        <hr>
                                         <label>&nbsp;&nbsp;To&nbsp;&nbsp;&nbsp; :</label>
 										<input type="text" id="endDate" name="endDate" size="10"  readonly>
 										<input type="button" value="..." id="BTN2" name="BTN2">
 										<hr>
-										<label>&nbsp;IPCAM&nbsp; :</label>
+										<label>IPCAM :</label>
 										<!--<select name="mac" class="selectpicker" id="mac">
 											<option value="1c497b48bb40">Search...</option>
 										</select>-->
-										<select v-model="selectedCam">
+										<select v-model="selectedCam" @change="selectCam">
 										  <option v-for="cam in camList" v-bind:value="cam.gid">
 										    {{ cam.gid }} {{ cam.name }}
+										  </option>
+										</select>
+										<br>
+										<br>
+										<label>Sensor :</label>
+										<select v-model="selectedSensor" @change="selectSensor">
+										  <option v-for="sensor in sensorList" v-bind:value="sensor.device_mac">
+										     {{ sensor.device_name }} : {{ sensor.typeName }}
 										  </option>
 										</select>
               					    </div>
@@ -94,10 +148,11 @@
 									<button type="button" class="btn btn-default"
 									data-dismiss="modal">Close
 									</button>
-									<button type="button" onClick="firstQuery()" class="btn btn-primary">
+									<button type="button" @click="firstQuery" class="btn btn-primary">
 									Query
 									</button>
 								</div>
 							</div><!-- /.modal-content -->
 					</div><!-- /.modal-dialog -->
+					
 <%- include page/footer %>

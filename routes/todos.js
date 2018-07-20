@@ -1,28 +1,53 @@
 var express = require('express');
+var async = require('async');
 var router = express.Router();
 var JsonFileTools =  require('../models/jsonFileTools.js');
 var moment = require('moment');
 var cloud = require('../models/cloud.js');
+var myapi =  require('../models/myapi.js');
 var deviceListPath = './public/data/deviceList.json';
+var profilePath = './public/data/profile.json';
 var schedule = require('node-schedule');
 var jobs = {};
+var test = false;
 
 function createJob(jobid, jobtime) {
   // *    *    *    *   *    *
   // 秒   分   時   ㄖ   月   年
-  jobs[jobid] = schedule.scheduleJob(jobtime, function(){
-		// do something you want...
+    if (test == false) {
+		jobs[jobid] = schedule.scheduleJob(jobtime, function(){
+			// do something you want...
+			console.log('**** schedule.scheduleJob ');
+			toGetEvent(test, jobid);
+		});
+	} else {
+		toGetEvent(test, jobid);
+	}
+}
+
+function toGetEvent(test, gid) {
+	if (test != true) {
+		var time = moment();
+	} else {
 		var formatStr = 'YYYY-MM-DD 23:59:59';
 		var nowStr = moment().format(formatStr);
 		var time = moment(nowStr,formatStr);
-		var endDate = time.toDate();
-		var timestamp = endDate.getTime();
-		cloud.getPlayList(jobid, timestamp, function(err,results){
-			if (err)
-				console.log('???? createJob '+ jobid + ' ' + new Date() + '\n' + err);
-			console.log(jobid + 'results: ' + results.length);
-	  });
-  });
+		time = time.subtract(1, 'days');
+		console.log(nowStr);
+	}
+
+	var endDate = time.toDate();
+	var timestamp = endDate.getTime();
+	console.log(time);
+	console.log(endDate);
+	console.log(timestamp);
+
+	cloud.getPlayList(gid, timestamp, function(err,results){
+		if (err)
+			console.log('???? createJob error : '+ gid + ' ' + new Date() + '\n' + err);
+		if(results)
+			console.log(gid + ' results: ' + results.length);
+	});
 }
 
 function deleteJob(jobid) {
@@ -30,23 +55,31 @@ function deleteJob(jobid) {
 };
 
 function scheduleDownloadImage(){
-    /*schedule.scheduleJob('00 56 16 * * *', function(){
-		console.log('scheduleDownloadImage :' + new Date());
-	});*/
-	var json =JsonFileTools.getJsonFromFile(deviceListPath);
-	if (json.device_list) {
-		cloud.getDeviceList(function(err, result){
-      if(err) {
-				return;
+	var retry = 0;
+    cloud.getDeviceList(function(err, result){
+		if(err) {
+			if(retry < 2) {
+				++retry;
+				scheduleDownloadImage();
 			}
-			var list = result.device_list;
-      for (let i=0; i < list.length; ++i) {
+			return;
+		}
+		var list = result.device_list;
+		if (list) {
+			retry = 0;
+			for (let i=0; i < list.length; ++i) {
 				let cam = list[i];
 				let gid = cam.gid;
-				createJob(gid, '55 59 23 * * *');
+				createJob(gid, '59 01 10 * * *');
 			}
-		});
-	}
+		} else {
+			if(retry < 2) {
+				++retry;
+				scheduleDownloadImage();
+			}
+			return;
+		}
+	});
 }
 
 scheduleDownloadImage();
@@ -56,17 +89,41 @@ router.route('/query')
 	// get all the bears (accessed at GET http://localhost:8080/api/bears)
 	.get(function(req, res) {
 		var gid     = req.query.gid;
+		toGetEvent(false, gid);
 		var endDate  = req.query.to;
 		var startDate= req.query.from;
-		var index    = req.query.index;
-		var limit    = req.query.limit;
-		var total    = req.query.total;
-		/*cloud.query(mac, startDate, endDate, index, limit, total,function(err,results){
+		var mac    = req.query.mac;
+		mac = mac.toLowerCase();
+		myapi.getEventList(mac, startDate, endDate,function(err,results){
               if (err)
 				return res.send(err);
 			  return res.json(results);
-		});*/
-		
+		});
+	});
+
+router.route('/setting')
+
+	// get all the bears (accessed at GET http://localhost:8080/api/bears)
+	.get(function(req, res) {
+		var gid     = req.query.gid;
+		var macs = req.query.macs;
+		var macList = macs.split(",");
+		var profileObj;
+		try {
+			profileObj = JsonFileTools.getJsonFromFile(profilePath);
+			if (profileObj == null) {
+				profileObj = {};
+			}
+		} catch (error) {
+			profileObj = {};
+		}
+		profileObj[gid] = macList;
+		try {
+			JsonFileTools.saveJsonToFile(profilePath, profileObj);
+		} catch (error) {
+			profileObj = {};
+		}
+		return res.json(profileObj);
 	});
 
 router.route('/device_list')

@@ -2,10 +2,20 @@
 var router = express.Router();
 var UserDbTools =  require('../models/userDbTools.js');
 var cloud =  require('../models/cloud.js');
+var myapi =  require('../models/myapi.js');
 var settings = require('../settings');
 var JsonFileTools =  require('../models/jsonFileTools.js');
 var sessionPath = './public/data/session.json';
+var mysessionPath = './public/data/mysession.json';
+var profilePath = './public/data/profile.json';
 var deviceListPath = './public/data/deviceList.json';
+var async = require('async');
+
+myapi.getToken( function (err, result) {
+	if(err)
+	console.log(err);
+	JsonFileTools.saveJsonToFile(mysessionPath, result);
+})
 
 function findUnitsAndShowSetting(req,res,isUpdate){
 	UnitDbTools.findAllUnits(function(err,units){
@@ -34,15 +44,54 @@ function findUnitsAndShowSetting(req,res,isUpdate){
 module.exports = function(app) {
   app.get('/', checkLogin);
   app.get('/', function (req, res) {
-	cloud.getDeviceList(
-		function(err, result){
-			JsonFileTools.saveJsonToFile(deviceListPath, {"device_list": result.device_list});
-			res.render('index', { title: 'Index',
-				user:req.session.user,
-				camList: result.device_list
+	async.series([
+		function(next){
+			cloud.getDeviceList(function(err1, result1){
+				next(err1, result1);
+			});
+		},
+		function(next){
+			myapi.getDeviceList(function(err2, result2){
+				next(err2, result2);
+			});
+		},
+		function(next){
+			myapi.getMapList(function(err3, result3){
+				next(err3, result3);
 			});
 		}
-	);
+	], function(errs, results){
+		if(errs) throw errs;    // errs = [err1, err2, err3]
+		console.log(results);   // results = [result1, result2, result3]
+		var result_1 = results[0];
+		var sensorList = results[1];
+		var mapList = results[2];//map list
+		var mapObj = {};
+		for (let i=0; i < mapList.length; ++i) {
+			mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
+		}
+		for (let j=0; j < sensorList.length; ++j) {
+			let sensor = sensorList[j];
+			sensor['typeName'] = mapObj[sensor['fport']];
+		}
+		var profileObj;
+		try {
+			profileObj = JsonFileTools.getJsonFromFile(profilePath);
+			if (profileObj == null) {
+				profileObj = {};
+				JsonFileTools.saveJsonToFile(profilePath, profileObj);
+			}
+		} catch (error) {
+			profileObj = {};
+			JsonFileTools.saveJsonToFile(profilePath, profileObj);
+		}
+		res.render('index', { title: 'Index',
+			user:req.session.user,
+			camList: result_1.device_list,
+			sensorList: sensorList,
+			profile: profileObj
+		});
+	});
   });
 
   app.get('/login', checkNotLogin);

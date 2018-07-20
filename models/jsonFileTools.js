@@ -147,7 +147,7 @@ function saveJaonFile(path,obj){
 }
 
 function getJaonFile(path){
-    console.log("Debug jsonFileTools getJaonFile -> path: "+ path);
+    // console.log("Debug jsonFileTools getJaonFile -> path: "+ path);
     if (fs.existsSync(path) == false) {
         return null;
     }else{
