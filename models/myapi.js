@@ -88,13 +88,7 @@ function download (uri, filename){
                 callback(err, null);
             }else{
                 JsonFileTools.saveJsonToFile(sessionPath,result);
-                sendDeviceListRequest(result, function(err, result){
-                    if(err){
-                        callback(err, null);
-                    } else {
-                        callback(null, result);
-                    }
-                });
+                callback(null, result);
             }
         })
     } else {

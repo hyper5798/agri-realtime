@@ -94,13 +94,7 @@ function checkAndGetToken(callback) {
                 callback(err, null);
             }else{
                 JsonFileTools.saveJsonToFile(sessionPath,result);
-                sendDeviceListRequest(result, function(err, result){
-                    if(err){
-                        callback(err, null);
-                    } else {
-                        callback(null, result);
-                    }
-                });
+                callback(err, result);
             }
         })
     } else {
@@ -167,7 +161,8 @@ function sendDeviceListRequest(session, callback) {
     var api_token = get_ApiToken(time);
     var form = { token:token,api_key:settings.api_key,
                        api_token:api_token, time:time, profile:false};
-
+    console.log('**** sendDeviceListRequest form');
+    console.log(JSON.stringify(form));
     request.post(url,{form:form},
         function(err, result) {
             if(err) {
@@ -191,14 +186,14 @@ function getEventList(gid, endTime, callback) {
     var url = server + settings.get_event_list;
     checkAndGetToken(function(err, session) {
         if (err) {
-            call(err, null);
+            callback(err, null);
         } else {
             var token = session.token;
             // request time range “HOUR”, “DAY”, “WEEK”, “MONTH”
             // default: “DAY”
 
             var form = { token:token, device_id: gid,end_time: endTime,range: "DAY", detail:true};
-            console.log('getEventList : ' + form);
+            
             request.post(url,{form:form},
                 function(err, result) {
                     if(err) {
@@ -277,6 +272,9 @@ function toStr(value) {
 }
 
 function getPlayList(gid, endDate, callback) {
+    console.log('**** getPlayList ****');
+    console.log(gid);
+    console.log(endDate);
     getEventList(gid, endDate, function(err,list){
         if (err) {
             callback(err, null);

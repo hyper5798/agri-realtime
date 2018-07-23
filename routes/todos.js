@@ -70,7 +70,10 @@ function scheduleDownloadImage(){
 			for (let i=0; i < list.length; ++i) {
 				let cam = list[i];
 				let gid = cam.gid;
-				createJob(gid, '59 01 10 * * *');
+				createJob(gid, '59 59 23 * * *');
+				if (test) {
+					break;
+				}
 			}
 		} else {
 			if(retry < 2) {
