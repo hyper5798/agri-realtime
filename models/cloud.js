@@ -143,7 +143,8 @@ function getDeviceList(callback) {
             callback(err, null);
         } else {
             sendDeviceListRequest(session, function(err, result){
-                if(err){
+                if(err == 1427){
+                    JsonFileTools.saveJsonToFile(sessionPath,{});
                     callback(err, null);
                 } else {
                     callback(null, result);
@@ -172,7 +173,10 @@ function sendDeviceListRequest(session, callback) {
                 //console.log('flag : '+flag);
                 //console.log('body type : '+typeof(result.body));
                 var json= JSON.parse(result.body);
-                if(json.device_list == undefined) {
+                var status = json.status;
+                if(status.code == 1427) {
+                    callback(status.code, false);
+                } else if(json.device_list == undefined) {
                     callback(null, false);
                 }
                 else {

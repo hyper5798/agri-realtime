@@ -18,7 +18,7 @@ var UserDbTools =  require('./models/userDbTools.js');
 //Jason add on 2017.02.16 - end
 var app = express();
 
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 8080;
 console.log('Server listen port :'+port);
 app.set('port', port);
 app.set('views', path.join(__dirname, 'views'));

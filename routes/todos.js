@@ -32,7 +32,7 @@ function toGetEvent(test, gid) {
 		var formatStr = 'YYYY-MM-DD 23:59:59';
 		var nowStr = moment().format(formatStr);
 		var time = moment(nowStr,formatStr);
-		time = time.subtract(1, 'days');
+		// time = time.subtract(4, 'days');
 		console.log(nowStr);
 	}
 
@@ -71,9 +71,9 @@ function scheduleDownloadImage(){
 				let cam = list[i];
 				let gid = cam.gid;
 				createJob(gid, '59 59 23 * * *');
-				if (test) {
+				/*if (test) {
 					break;
-				}
+				}*/
 			}
 		} else {
 			if(retry < 2) {
@@ -95,13 +95,49 @@ router.route('/query')
 		toGetEvent(false, gid);
 		var endDate  = req.query.to;
 		var startDate= req.query.from;
-		var mac    = req.query.mac;
-		mac = mac.toLowerCase();
-		myapi.getEventList(mac, startDate, endDate,function(err,results){
-              if (err)
-				return res.send(err);
-			  return res.json(results);
-		});
+		var maclist;
+		try {
+			var profile = JsonFileTools.getJsonFromFile(profilePath);
+		    maclist = profile[gid];
+		} catch (error) {
+			return res.send(err);
+		}
+		if (maclist && maclist.length == 1 ) {
+			var mac = maclist[0];
+			mac = mac.toLowerCase();
+			myapi.getEventList(mac, startDate, endDate,function(err,results){
+				if (err)
+				  return res.send(err);
+				var value = {};
+				value[mac] = results;
+				return res.json(value);
+		  });
+		} 
+		/* else if (maclist && maclist.length == 2) {
+			var mac1 = maclist[0];
+			var mac2 = maclist[1];
+			mac1 = mac1.toLowerCase();
+			mac2 = mac2.toLowerCase();
+			async.series([
+				function(next){
+					myapi.getEventList(mac1, startDate, endDate, function(err1, result1){
+						next(err1, result1);
+					});
+				},
+				function(next){
+					myapi.getEventList(mac2, startDate, endDate, function(err2, result2){
+						next(err2, result2);
+					});
+				}
+			], function(errs, results){
+				if(errs) 
+				    return res.send(err);
+				var value = {};
+				value[mac1] = results[0]['data'];
+				value[mac2] = results[1]['data'];
+				return res.json(value);
+			});
+		}*/
 	});
 
 router.route('/setting')

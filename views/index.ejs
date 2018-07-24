@@ -61,13 +61,12 @@
 					</div>
 					<div v-show="!isSetting">
 						<div v-show="isChart">
-							<ul v-show="hasTab" class="nav nav-tabs">
-			　　　　　　<li v-for="(item,$index) in items" @click="selectStyle (item, $index) " :class="{'active':$index==0}" >
-			              <a v-bind:href="'#'+item" @click="showTab">
-										{{item}} 
-										</a>
-			　　　　　　</li>
-			　　　　 </ul>
+							<div v-show="hasTab" class="btn-group">
+								<button v-for="(item,$index) in items" type="button" class="btn btn-primary" @click="alocked(item,$index)">
+									{{item}}
+								</button>
+							</div>
+			        
               <div style="width:90%;">
 								<canvas id="canvas"></canvas>
 							</div>
@@ -118,10 +117,12 @@
 
 								<div class="modal-body">
 									<div class="col-md-12" >
-                                        <label>From :</label>
+                    <label>From :</label>
 										<input type="text" id="startDate" name="startDate" size="10"  readonly>
 										<input type="button" value="..." id="BTN" name="BTN"><br>
-                                        <label>&nbsp;&nbsp;To&nbsp;&nbsp;&nbsp; :</label>
+                    <br>
+										<label>&nbsp;&nbsp;To&nbsp;&nbsp;&nbsp; :</label>
+										
 										<input type="text" id="endDate" name="endDate" size="10"  readonly>
 										<input type="button" value="..." id="BTN2" name="BTN2">
 										<hr>
@@ -134,15 +135,15 @@
 										    {{ cam.gid }} {{ cam.name }}
 										  </option>
 										</select>
-										<br>
+										<!--<br>
 										<br>
 										<label>Sensor :</label>
 										<select v-model="selectedSensor" @change="selectSensor">
 										  <option v-for="sensor in sensorList" v-bind:value="sensor.device_mac">
 										     {{ sensor.device_name }} : {{ sensor.typeName }}
 										  </option>
-										</select>
-              					    </div>
+										</select>-->
+              		</div>
 								</div>
 								<div class="modal-footer">
 									<button type="button" class="btn btn-default"

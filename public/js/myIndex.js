@@ -15,6 +15,7 @@ var profile = JSON.parse(document.getElementById("profile").value);
 var cam1 = camList[0]['gid'];
 var sensor1 = sensorList[12]['device_mac'];
 var allMacList = getMacList();
+var allMacName = getAllMacName();
 // var camList = document.getElementById("camList").value;
 //Slider
 var min = 0;
@@ -31,6 +32,8 @@ var datasetIndex = 0;
 var chartData = [];
 //Transfet
 var t;
+var allDataSet = [];
+var selectedSet = '';
 
 var app = new Vue({
   el: '#app',
@@ -50,7 +53,7 @@ var app = new Vue({
     alert: '',
     eventDate: '',
     eventData: '',
-    items: ['test1', 'test2', 'test3', 'test4', 'test5']
+    items: []
   },
   methods: {
     backStart: function () {
@@ -65,7 +68,7 @@ var app = new Vue({
       this.pageTimer["timer1"] = setInterval(function(){
           ++value;
           if (value > max) {
-            alert(value + ' : ' + max);
+            // alert(value + ' : ' + max);
             value = 0;
             resetChart(); 
           }
@@ -73,7 +76,7 @@ var app = new Vue({
           self.sImg = imgArr[value];
           self.eventDate = msgArr[value];
           self.eventData = JSON.stringify(chartData[value]);
-          addData(chartData[value]);
+          addData(chartData[value], selectedSet);
           // console.log(self.sImg);
       },1000);
     },
@@ -91,14 +94,10 @@ var app = new Vue({
       // alert(ele.target.value);
       this.selectedSensorName = getSensorNameByMac(ele.target.value);
     },
-    selectStyle: function(myitem, index) {
-      alert(index);
-　　　　this.$nextTick(function () {
-  　　　　this.items.forEach(function (item) {
-  　　　　　　item['active'] = false;
-  　　　　});
-  　　　　myitem['active'] = true;
-　　　　});
+    alocked: function(myitem, index) {
+      changeDataset(index);
+      selectedSet = myitem;
+      // alert(selectedSet);
 　　 },
     showTab: function(ele) {
       console.log(ele.target)
@@ -221,7 +220,11 @@ function find() {
 
 function toQuery(gid, mac){
   // alert(gid + ' : ' + mac);
-  //alert($("#startDate").val());
+  var list = profile[gid];
+  if (list == undefined || list.length == 0) {
+    alert('IPCAM尚未綁定裝置,請先設定再查詢!');
+    return;
+  }
   console.log('toQuery()');
   removeDataset();
   // $.LoadingOverlay("show");
@@ -229,7 +232,8 @@ function toQuery(gid, mac){
   // table.fnClearTable();
   var from = $('#startDate').val();
   var to = $('#endDate').val();
-  var url = 'http://'+host+":"+port+'/todos/query?gid='+gid+'&mac='+mac+'&from='+from+'&to='+to;
+  // var url = 'http://'+host+":"+port+'/todos/query?gid='+gid+'&mac='+mac+'&from='+from+'&to='+to;
+  var url = 'http://'+host+":"+port+'/todos/query?gid='+gid+'&from='+from+'&to='+to;
   console.log(url);
   loadDoc("query",url);
 }
@@ -242,8 +246,8 @@ function toSetting(gid){
   var arr = t.get_values();
   var selectMac = [];
   var selectType;
-  if (arr.length > 2) {
-    alert('選中裝置數量不得超過兩個,請重新選擇!');
+  if (arr.length > 1) {
+    alert('選中裝置數量不得超過1個,請重新選擇!');
     return;
   }
   for (let m =0 ; m < arr.length; ++m) {
@@ -290,11 +294,23 @@ function loadDoc(queryType,url) {
                     //console.log('type.indexOf(data) data : '+json.data.length);
                     table.fnAddData(json.data);
                 }*/
-
-                console.log('total  : '+ json.total );
-                app.alert = '總共取得  : '+ json.total + '筆資料';
-                if (json.total > 0) {
-                  makeChartData(json.data);
+                
+                var keys = Object.keys(json);
+                // alert(JSON.stringify(keys))
+                var alertMessage = '';
+                var result;
+                var list;
+                var total = 0;
+                if (keys.length > 0) {
+                  let result = json[keys[0]];
+                  list = result.data;
+                  alertMessage = alertMessage + allMacName[keys[0]] + ' : ' + result.total + '筆 ';
+                  total = total + result.total;
+                }
+                
+                app.alert = alertMessage;
+                if (total > 0) {
+                  makeChartData(list);
                 } else {
                   alert('找不到資料')
                 }
@@ -328,10 +344,6 @@ function makeChartData(list) {
   console.log(mdata1);*/
   datasetIndex = 0;
   dataset = Object.keys(mdata1.information);
-  //Add dataset
-  for(let i=0; i < dataset.length; ++i) {
-    addDataset ();
-  }
   //For image
   var now_gid = app.selectedCam;
   imgArr = [];
@@ -342,7 +354,7 @@ function makeChartData(list) {
     let event = list[j];
     let image = '/data/' + now_gid + '/' + getTimeName(event.timestamp);
     imgArr.push(image);
-    msgArr.push(event.date);
+    msgArr.push(event.date); 
     let data = {time:event.date};
     data = Object.assign(data, event.information);
     chartData.push(data);
@@ -350,12 +362,27 @@ function makeChartData(list) {
   }
   app.sImg = imgArr[0];
   app.eventDate = msgArr[0];
+  var lastAll = [];
+  for(let k=0; k< dataset.length; ++k) {
+    let newset = getDataSet(k, dataset[k]);
+    allDataSet.push(newset);
+    lastAll.push(newset);
+  } 
+  allDataSet.push(lastAll);
+  // alert(JSON.stringify(allDataSet));
+
   if (dataset.length > 0) {
-    app.items = dataset;
     app.hasTab = true;
+    app.items = dataset;
+    app.items.push('all');
   }
- 
+  
+  selectedSet = dataset[0];
+  
+  console.log('allDataSet : ' + JSON.stringify(allDataSet));
+  console.log('app.items : ' + JSON.stringify(app.items));
   console.log(JSON.stringify(chartData));
+  changeDataset(0);
 }
 
 function getTimeName(timestamp) {
@@ -494,6 +521,18 @@ function getMacList(gid) {
   return list;
 }
 
+function getAllMacName() {
+  var obj = {};
+  for (let i=0; i< sensorList.length; ++i) {
+      let sensor = sensorList[i];
+      // alert(JSON.stringify(sensor));
+      obj[sensor.device_mac.toLowerCase()] = sensor.device_name;
+      // alert(JSON.stringify(obj));
+  }
+  console.log('getAllMacName() : ' + JSON.stringify(obj));
+  return obj;
+}
+
 var timeFormat = 'YYYY-MM-DD HH:mm';
 
 		function newDate(days) {
@@ -562,10 +601,21 @@ function randomizeData () {
   window.myLine.update();
 }
 
+function getDataSet (i, label) {
+  var colorName = colorNames[ ((i * 2 ) % colorNames.length) ];
+  var newColor = window.chartColors[colorName];
+  var newDataset = {
+    label: label,
+    borderColor: newColor,
+    backgroundColor: color(newColor).alpha(0.5).rgbString(),
+    fill: false,
+    data: [],
+  };
+  return newDataset;
+}
 
-
-function addDataset () {
-  var colorName = colorNames[ ((config.data.datasets.length * 2 ) % colorNames.length) ];
+function changeDataset (index) {
+  /*var colorName = colorNames[ ((config.data.datasets.length * 2 ) % colorNames.length) ];
   var newColor = window.chartColors[colorName];
   var label = '';
   if (datasetIndex < dataset.length ) {
@@ -586,37 +636,51 @@ function addDataset () {
 
   for (var index = 0; index < config.data.labels.length; ++index) {
     newDataset.data.push(randomScalingFactor());
+  } 
+  config.data.datasets.push(newDataset);*/
+  var newDataset = allDataSet[index];
+  if (index == allDataSet.length-1) {
+    config.data.datasets = newDataset;
+  } else {
+    config.data.datasets = [newDataset];
   }
-  config.data.datasets.push(newDataset);
+
+  
   window.myLine.update();
 }
 
-function addData (data) {
+function addData (data, mySet) {
   // alert(JSON.stringify(data));
+  // alert(mySet);
   if (config.data.datasets.length > 0) {
     // config.data.labels.push(newDate(config.data.labels.length));
     config.data.labels.push(data.time);
-    // alert(JSON.stringify(config.data.labels));
-    for (var index = 0; index < config.data.datasets.length; ++index) {
-      /*if (typeof config.data.datasets[index].data[0] === 'object') {
-        config.data.datasets[index].data.push({
-          x: newDate(config.data.datasets[index].data.length),
-          y: randomScalingFactor(),
-        });
-      } else {
-        config.data.datasets[index].data.push(randomScalingFactor());
-      }*/
-      // alert(dataset[index] + '->' + data[dataset[index]]);
-      if (typeof config.data.datasets[index].data[0] === 'object') {
-        config.data.datasets[index].data.push({
-          x: data.time,
-          y: data[dataset[index]],
-        });
-      } else {
-        config.data.datasets[index].data.push(data[dataset[index]]);
+    if (config.data.datasets.length == 1 ) {
+      
+      config.data.datasets[0].data.push(data[mySet]);
+    } else {
+      for (var index = 0; index < config.data.datasets.length; ++index) {
+        /*if (typeof config.data.datasets[index].data[0] === 'object') {
+          config.data.datasets[index].data.push({
+            x: newDate(config.data.datasets[index].data.length),
+            y: randomScalingFactor(),
+          });
+        } else {
+          config.data.datasets[index].data.push(randomScalingFactor());
+        }*/
+        // alert(dataset[index] + '->' + data[dataset[index]]);
+        if (typeof config.data.datasets[index].data[0] === 'object') {
+          config.data.datasets[index].data.push({
+            x: data.time,
+            y: data[dataset[index]],
+          });
+        } else {
+          config.data.datasets[index].data.push(data[dataset[index]]);
+        }
+        // config.data.datasets[index].data.push(data[dataset[index]]);
       }
-      // config.data.datasets[index].data.push(data[dataset[index]]);
     }
+    
     if (config.data.labels.length > 48) {
       removeData ();
     }
