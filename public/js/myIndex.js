@@ -13,13 +13,13 @@ var camList = JSON.parse(document.getElementById("camList").value);
 var sensorList = JSON.parse(document.getElementById("sensorList").value);
 var profile = JSON.parse(document.getElementById("profile").value);
 var cam1 = camList[0]['gid'];
-var sensor1 = sensorList[12]['device_mac'];
+var sensor1 = profile[cam1][0];
 var allMacList = getMacList();
 var allMacName = getAllMacName();
 // var camList = document.getElementById("camList").value;
 //Slider
 var min = 0;
-var max = 12;
+var max = 1;
 var value = 0;
 //For chart
 var colorNames = Object.keys(window.chartColors);
@@ -43,7 +43,7 @@ var app = new Vue({
     selectedCam: cam1,
     selectedSensor: sensor1,
     selectedCamName: getCamNameByGid(cam1),
-    selectedSensorName: getSensorNameByMac(sensor1),
+    selectedSensorName: allMacName[sensor1],
     isSetting: false,
     isChart: true,
     isShowCSV: false,
@@ -59,12 +59,17 @@ var app = new Vue({
     backStart: function () {
       value = 0;
       setSliderValue(value);
+      resetChart();
       this.sImg = imgArr[value];
       self.eventDate = msgArr[value];
       // console.log(this.sImg);
     },
     playImg: function () {
       const self = this;
+      if (chartData.length == 0) {
+        alert('尚未查詢資料,無法播放!');
+        return;
+      }
       this.pageTimer["timer1"] = setInterval(function(){
           ++value;
           if (value > max) {
@@ -89,6 +94,13 @@ var app = new Vue({
     selectCam: function(ele) {
       // alert(ele.target.value);
       this.selectedCamName = getCamNameByGid(ele.target.value);
+      var mac = profile[ele.target.value][0];
+      
+      if (allMacName[mac]) {
+        this.selectedSensorName = allMacName[mac];
+      } else {
+        this.selectedSensorName = '';
+      }
     },
     selectSensor: function(ele) {
       // alert(ele.target.value);
@@ -344,11 +356,13 @@ function makeChartData(list) {
   console.log(mdata1);*/
   datasetIndex = 0;
   dataset = Object.keys(mdata1.information);
+  // alert(JSON.stringify(dataset));
   //For image
   var now_gid = app.selectedCam;
   imgArr = [];
   msgArr = [];
   chartData = [];
+  allDataSet = [];
   // alert(now_gid);
   for(let j=list.length-1; j > -1; --j) {
     let event = list[j];
@@ -360,6 +374,7 @@ function makeChartData(list) {
     chartData.push(data);
     // break;
   }
+  // alert(JSON.stringify(chartData));
   app.sImg = imgArr[0];
   app.eventDate = msgArr[0];
   var lastAll = [];
@@ -375,14 +390,13 @@ function makeChartData(list) {
     app.hasTab = true;
     app.items = dataset;
     app.items.push('all');
+	  selectedSet = dataset[dataset.length-1];
+	  changeDataset(dataset.length-1);
   }
   
-  selectedSet = dataset[0];
-  
-  console.log('allDataSet : ' + JSON.stringify(allDataSet));
+  // console.log('allDataSet : ' + JSON.stringify(allDataSet));
   console.log('app.items : ' + JSON.stringify(app.items));
   console.log(JSON.stringify(chartData));
-  changeDataset(0);
 }
 
 function getTimeName(timestamp) {
@@ -655,30 +669,25 @@ function addData (data, mySet) {
   if (config.data.datasets.length > 0) {
     // config.data.labels.push(newDate(config.data.labels.length));
     config.data.labels.push(data.time);
-    if (config.data.datasets.length == 1 ) {
-      
-      config.data.datasets[0].data.push(data[mySet]);
-    } else {
-      for (var index = 0; index < config.data.datasets.length; ++index) {
-        /*if (typeof config.data.datasets[index].data[0] === 'object') {
-          config.data.datasets[index].data.push({
-            x: newDate(config.data.datasets[index].data.length),
-            y: randomScalingFactor(),
-          });
-        } else {
-          config.data.datasets[index].data.push(randomScalingFactor());
-        }*/
-        // alert(dataset[index] + '->' + data[dataset[index]]);
-        if (typeof config.data.datasets[index].data[0] === 'object') {
-          config.data.datasets[index].data.push({
-            x: data.time,
-            y: data[dataset[index]],
-          });
-        } else {
-          config.data.datasets[index].data.push(data[dataset[index]]);
-        }
-        // config.data.datasets[index].data.push(data[dataset[index]]);
+    for (var index = 0; index < config.data.datasets.length; ++index) {
+      /*if (typeof config.data.datasets[index].data[0] === 'object') {
+        config.data.datasets[index].data.push({
+          x: newDate(config.data.datasets[index].data.length),
+          y: randomScalingFactor(),
+        });
+      } else {
+        config.data.datasets[index].data.push(randomScalingFactor());
+      }*/
+      // alert(dataset[index] + '->' + data[dataset[index]]);
+      if (typeof config.data.datasets[index].data[0] === 'object') {
+        config.data.datasets[index].data.push({
+          x: data.time,
+          y: data[dataset[index]],
+        });
+      } else {
+        config.data.datasets[index].data.push(data[dataset[index]]);
       }
+      // config.data.datasets[index].data.push(data[dataset[index]]);
     }
     
     if (config.data.labels.length > 48) {

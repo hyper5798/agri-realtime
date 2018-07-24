@@ -4,7 +4,7 @@
       <div class="col-sm-12 col-md-4">
         <div class="BG-Average">
 	          <nav class="navbar bg-faded btn-menu">
-	            <button type="button" class="btn btn-success btn-all btn-block" disabled>
+	            <button type="button" class="btn btn-primary btn-all btn-block">
 	              {{selectedCamName}} <==> {{selectedSensorName}}
 	            </button>
 	            <!--<img src="/data/600018691/2018071116.jpg" width="480" height="400">-->
@@ -61,11 +61,11 @@
 					</div>
 					<div v-show="!isSetting">
 						<div v-show="isChart">
-							<div v-show="hasTab" class="btn-group">
+							<!--<div v-show="hasTab" class="btn-group">
 								<button v-for="(item,$index) in items" type="button" class="btn btn-primary" @click="alocked(item,$index)">
 									{{item}}
 								</button>
-							</div>
+							</div>-->
 			        
               <div style="width:90%;">
 								<canvas id="canvas"></canvas>

@@ -61,36 +61,39 @@ module.exports = function(app) {
 			});
 		}
 	], function(errs, results){
-		if(errs) throw errs;    // errs = [err1, err2, err3]
-		console.log(results);   // results = [result1, result2, result3]
-		var result_1 = results[0];
-		var sensorList = results[1];
-		var mapList = results[2];//map list
-		var mapObj = {};
-		for (let i=0; i < mapList.length; ++i) {
-			mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
-		}
-		for (let j=0; j < sensorList.length; ++j) {
-			let sensor = sensorList[j];
-			sensor['typeName'] = mapObj[sensor['fport']];
-		}
-		var profileObj;
-		try {
-			profileObj = JsonFileTools.getJsonFromFile(profilePath);
-			if (profileObj == null) {
+		if(errs) {
+			return res.redirect('/');
+		} else {
+			console.log(results);   // results = [result1, result2, result3]
+			var result_1 = results[0];
+			var sensorList = results[1];
+			var mapList = results[2];//map list
+			var mapObj = {};
+			for (let i=0; i < mapList.length; ++i) {
+				mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
+			}
+			for (let j=0; j < sensorList.length; ++j) {
+				let sensor = sensorList[j];
+				sensor['typeName'] = mapObj[sensor['fport']];
+			}
+			var profileObj;
+			try {
+				profileObj = JsonFileTools.getJsonFromFile(profilePath);
+				if (profileObj == null) {
+					profileObj = {};
+					JsonFileTools.saveJsonToFile(profilePath, profileObj);
+				}
+			} catch (error) {
 				profileObj = {};
 				JsonFileTools.saveJsonToFile(profilePath, profileObj);
 			}
-		} catch (error) {
-			profileObj = {};
-			JsonFileTools.saveJsonToFile(profilePath, profileObj);
+			res.render('index', { title: 'Index',
+				user:req.session.user,
+				camList: result_1.device_list,
+				sensorList: sensorList,
+				profile: profileObj
+			});
 		}
-		res.render('index', { title: 'Index',
-			user:req.session.user,
-			camList: result_1.device_list,
-			sensorList: sensorList,
-			profile: profileObj
-		});
 	});
   });
 
