@@ -13,7 +13,14 @@ var camList = JSON.parse(document.getElementById("camList").value);
 var sensorList = JSON.parse(document.getElementById("sensorList").value);
 var profile = JSON.parse(document.getElementById("profile").value);
 var cam1 = camList[0]['gid'];
-var sensor1 = profile[cam1][0];
+var sensor1, sensor_name;
+if (profile[cam1] && profile[cam1].length > 0) {
+  sensor1 = profile[cam1][0];
+  sensor_name = allMacName[sensor1];
+} else {
+  sensor1 = '';
+  sensor_name = '尚未設定裝置';
+}
 var allMacList = getMacList();
 var allMacName = getAllMacName();
 // var camList = document.getElementById("camList").value;
@@ -43,7 +50,7 @@ var app = new Vue({
     selectedCam: cam1,
     selectedSensor: sensor1,
     selectedCamName: getCamNameByGid(cam1),
-    selectedSensorName: allMacName[sensor1],
+    selectedSensorName: sensor_name,
     isSetting: false,
     isChart: true,
     isShowCSV: false,
@@ -75,7 +82,7 @@ var app = new Vue({
           if (value > max) {
             // alert(value + ' : ' + max);
             value = 0;
-            resetChart(); 
+            resetChart();
           }
           setSliderValue(value);
           self.sImg = imgArr[value];
@@ -95,11 +102,11 @@ var app = new Vue({
       // alert(ele.target.value);
       this.selectedCamName = getCamNameByGid(ele.target.value);
       var mac = profile[ele.target.value][0];
-      
+
       if (allMacName[mac]) {
         this.selectedSensorName = allMacName[mac];
       } else {
-        this.selectedSensorName = '';
+        this.selectedSensorName = '尚未設定裝置';
       }
     },
     selectSensor: function(ele) {
@@ -306,7 +313,7 @@ function loadDoc(queryType,url) {
                     //console.log('type.indexOf(data) data : '+json.data.length);
                     table.fnAddData(json.data);
                 }*/
-                
+
                 var keys = Object.keys(json);
                 // alert(JSON.stringify(keys))
                 var alertMessage = '';
@@ -319,7 +326,7 @@ function loadDoc(queryType,url) {
                   alertMessage = alertMessage + allMacName[keys[0]] + ' : ' + result.total + '筆 ';
                   total = total + result.total;
                 }
-                
+
                 app.alert = alertMessage;
                 if (total > 0) {
                   makeChartData(list);
@@ -368,7 +375,7 @@ function makeChartData(list) {
     let event = list[j];
     let image = '/data/' + now_gid + '/' + getTimeName(event.timestamp);
     imgArr.push(image);
-    msgArr.push(event.date); 
+    msgArr.push(event.date);
     let data = {time:event.date};
     data = Object.assign(data, event.information);
     chartData.push(data);
@@ -382,7 +389,7 @@ function makeChartData(list) {
     let newset = getDataSet(k, dataset[k]);
     allDataSet.push(newset);
     lastAll.push(newset);
-  } 
+  }
   allDataSet.push(lastAll);
   // alert(JSON.stringify(allDataSet));
 
@@ -393,7 +400,7 @@ function makeChartData(list) {
 	  selectedSet = dataset[dataset.length-1];
 	  changeDataset(dataset.length-1);
   }
-  
+
   // console.log('allDataSet : ' + JSON.stringify(allDataSet));
   console.log('app.items : ' + JSON.stringify(app.items));
   console.log(JSON.stringify(chartData));
@@ -504,7 +511,7 @@ function setChosen(mgid) {
 
 function getChosenList(gid) {
   var list = [];
-  var maclist = []; 
+  var maclist = [];
   console.log('getChosenList profile :\n' + JSON.stringify(profile));
   if (profile[gid]) {
     maclist = profile[gid];
@@ -523,7 +530,7 @@ function getChosenList(gid) {
   } else {
     return 0;
   }
-  
+
 }
 
 function getMacList(gid) {
@@ -650,7 +657,7 @@ function changeDataset (index) {
 
   for (var index = 0; index < config.data.labels.length; ++index) {
     newDataset.data.push(randomScalingFactor());
-  } 
+  }
   config.data.datasets.push(newDataset);*/
   var newDataset = allDataSet[index];
   if (index == allDataSet.length-1) {
@@ -659,7 +666,7 @@ function changeDataset (index) {
     config.data.datasets = [newDataset];
   }
 
-  
+
   window.myLine.update();
 }
 
@@ -689,7 +696,7 @@ function addData (data, mySet) {
       }
       // config.data.datasets[index].data.push(data[dataset[index]]);
     }
-    
+
     if (config.data.labels.length > 48) {
       removeData ();
     }
