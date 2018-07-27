@@ -1,0 +1,1 @@
+{"test":{"name":"test","switch_mac":"0000000014000318","sensor_mac":"0000000005010b46","sensor_param":"溫度","switch_on":"60","switch_on_radio":"high","switch_off":"20","switch_off_radio":"low"},"test2":{"name":"test2","switch_mac":"87654321","sensor_mac":"000000000501095b","sensor_param":"雨量","switch_on":"30","switch_on_radio":"low","switch_off":"70","switch_off_radio":"high"}}

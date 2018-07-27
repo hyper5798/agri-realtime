@@ -12,13 +12,9 @@
 	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
 		<div class="container-fluid">
 			<div class="navbar-header">
-				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#sidebar-collapse">
-					<span class="sr-only">Toggle navigation</span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-					<span class="icon-bar"></span>
-				</button>
 				<a class="navbar-brand" href="\"><span>Agri</span>Demo</a>
+				<a class="navbar-brand" href="\">動態數據圖表</a>
+				<a class="navbar-brand" href="\control">自動澆灌</a>
 				<% if(user){ %>
 					<ul class="user-menu">
 						<li class="dropdown pull-right">
@@ -45,7 +41,7 @@
 		<% }else{ %>
 			<li>
 		<% } %>
-			<a href="/"><span class="fa fa-home"></span>  動態顯示數據圖表</a></li>
+			<a href="/"><span class="fa fa-home"></span>  動態數據圖表</a></li>
 		<% if(user.level === 0){ %>
 			<% if(title ==='Account'){ %>
 				<li class="active">
@@ -64,15 +60,10 @@
 		<div class="row">
 		  <div id="app">
 			<div class="col-lg-12">
-
-
 					<% if(title ==='Index'){ %>
-						<!--<div class="btn-group">
-
-						</div>-->
 						<div class="row">
 						  <div class="col-sm-2 pull-left">
-						  	<font color="blue"><label id="mTitle"> 動態顯示數據圖表</label></font>
+						  	<font size="4" color="blue"><label id="mTitle"> 動態數據圖表</h3></label></font>
 						  </div>
 						  <div class="col-sm-2 pull-left">
 						  	<font color="red">{{alert}}</label></font>
@@ -97,6 +88,37 @@
 						</div>
                         <hr>
 
+					<% } else { %>
+					    <div class="row">
+						  <div class="col-sm-2 pull-left">
+						  	<font size="4" color="blue"><label id="mTitle"> 自動澆灌</h3></label></font>
+						  </div>
+						  <div class="col-sm-2 pull-left">
+						  	<font color="red">{{alert}}</label></font>
+						  </div>
+
+						  <div v-if="!isSetting" class="col-md-2 col-sm-2">
+							    <button  type="button" @click="enableSetting">
+								    <span class="fa fa-pencil fa-2x"></span>
+									設定
+								</button>
+						  </div>
+						  <div v-if="isSetting" class="col-md-2 col-sm-2">
+							    <button  v-if="isEdit" type="button" class="btn btn-primary" @click="newSetting">
+								    <span class="fa fa-plus fa-2x"></span>
+									新增
+								</button>
+								<button  v-if="!isEdit" type="button" class="btn btn-success" @click="editSetting">
+								    <span class="fa fa-edit fa-2x"></span>
+									編輯
+								</button>
+						  </div>
+						  <div  class="col-sm-1">
+						  </div>
+
+						   <div class="col-sm-4"></div>
+						</div>
+                        <hr>
 					<% } %>
 
 			</div>

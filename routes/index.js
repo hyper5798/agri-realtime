@@ -8,7 +8,10 @@ var JsonFileTools =  require('../models/jsonFileTools.js');
 var sessionPath = './public/data/session.json';
 var mysessionPath = './public/data/mysession.json';
 var profilePath = './public/data/profile.json';
+var autoPath = './public/data/auto.json';
 var deviceListPath = './public/data/deviceList.json';
+var dataPath = './public/data/data.json';
+var finalPath = './public/data/final.json';
 var async = require('async');
 
 myapi.getToken( function (err, result) {
@@ -44,61 +47,90 @@ function findUnitsAndShowSetting(req,res,isUpdate){
 module.exports = function(app) {
   app.get('/', checkLogin);
   app.get('/', function (req, res) {
-	async.series([
-		function(next){
-			cloud.getDeviceList(function(err1, result1){
-				next(err1, result1);
-			});
-		},
-		function(next){
-			myapi.getDeviceList(function(err2, result2){
-				next(err2, result2);
-			});
-		},
-		function(next){
-			myapi.getMapList(function(err3, result3){
-				next(err3, result3);
-			});
+	var profileObj;
+	try {
+		profileObj = JsonFileTools.getJsonFromFile(profilePath);
+		if (profileObj == null) {
+			profileObj = {};
+			JsonFileTools.saveJsonToFile(profilePath, profileObj);
 		}
-	], function(errs, results){
-		if(errs) {
-			return res.redirect('/');
-		} else {
-			console.log(results);   // results = [result1, result2, result3]
-			var result_1 = results[0];
-			var sensorList = results[1];
-			var mapList = results[2];//map list
-			var mapObj = {};
-			for (let i=0; i < mapList.length; ++i) {
-				mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
-			}
-			for (let j=0; j < sensorList.length; ++j) {
-				let sensor = sensorList[j];
-				sensor['typeName'] = mapObj[sensor['fport']];
-			}
-			var profileObj;
-			try {
-				profileObj = JsonFileTools.getJsonFromFile(profilePath);
-				if (profileObj == null) {
-					profileObj = {};
-					JsonFileTools.saveJsonToFile(profilePath, profileObj);
-				}
-			} catch (error) {
-				profileObj = {};
-				JsonFileTools.saveJsonToFile(profilePath, profileObj);
-			}
+	} catch (error) {
+		profileObj = {};
+		JsonFileTools.saveJsonToFile(profilePath, profileObj);
+	}
+	getData(function(err, data){
+		if(err) {
 			res.render('index', { title: 'Index',
 				user:req.session.user,
-				camList: result_1.device_list,
-				sensorList: sensorList,
+				camList: [],
+				sensorList: [],
+				profile: profileObj
+			});
+		} else {
+            res.render('index', { title: 'Index',
+				user:req.session.user,
+				camList: data.camList,
+				sensorList: data.sensorList,
 				profile: profileObj
 			});
 		}
 	});
   });
 
+  app.get('/control', checkLogin);
+  app.get('/control', function (req, res) {
+	var autoObj;
+	try {
+		autoObj = JsonFileTools.getJsonFromFile(autoPath);
+		if (autoObj == undefined || autoObj == null) {
+			autoObj = {};
+			JsonFileTools.saveJsonToFile(autoPath, autoObj);
+		}
+	} catch (error) {
+		autoObj = {};
+		JsonFileTools.saveJsonToFile(autoPath, autoObj);
+	}
+	try {
+		finalObj = JsonFileTools.getJsonFromFile(finalPath);
+		if (finalObj == undefined || finalObj == null) {
+			autoObj = {};
+			JsonFileTools.saveJsonToFile(finalPath, finalObj);
+		}
+	} catch (error) {
+		finalObj = {};
+		JsonFileTools.saveJsonToFile(finalPath, finalObj);
+	}
+	getData(function(err, data){
+		if(err) {
+			res.render('control', { title: 'Control',
+			    user:req.session.user,
+			    camList: [],
+			    mapList: [],
+			    sensorList: [],
+				profile: autoObj,
+				final: finalObj
+		    });
+		} else {
+            res.render('control', { title: 'Control',
+			    user:req.session.user,
+			    camList: data.camList,
+			    mapList: data.mapList,
+			    sensorList: data.sensorList,
+			    profile: autoObj,
+				final: finalObj
+		    });
+		}
+	});
+  });
+
   app.get('/login', checkNotLogin);
   app.get('/login', function (req, res) {
+	//Reset data to empty
+	try {
+		JsonFileTools.saveJsonToFile(dataPath, {});
+	} catch (error) {
+		JsonFileTools.saveJsonToFile(dataPath, {});
+	}
 	req.session.user = null;
   	var name = req.flash('post_name').toString();
 	var successMessae,errorMessae;
@@ -169,6 +201,7 @@ module.exports = function(app) {
     req.flash('success', '');
     res.redirect('/login');
   });
+
   app.get('/account', checkLogin);
     app.get('/account', function (req, res) {
 
@@ -306,4 +339,71 @@ function checkNotLogin(req, res, next) {
   {
 	  next();
   }
+}
+
+function getData(callback) {
+	var data;
+	try {
+		data = JsonFileTools.getJsonFromFile(dataPath);
+		if (data == undefined || data == null || data.mapList === undefined) {
+			getCloudData(function(err, result){
+				if(err){
+					callback(err, {});
+				}
+				callback(null, result);
+			})
+		} else {
+			callback(null, data);
+		}
+	} catch (error) {
+		JsonFileTools.saveJsonToFile(dataPath, {});
+		callback(error, {});
+	}
+}
+
+function getCloudData(callback) {
+    async.series([
+		function(next){
+			cloud.getDeviceList(function(err1, result1){
+				next(err1, result1);
+			});
+		},
+		function(next){
+			myapi.getDeviceList(function(err2, result2){
+				next(err2, result2);
+			});
+		},
+		function(next){
+			myapi.getMapList(function(err3, result3){
+				next(err3, result3);
+			});
+		}
+	], function(errs, results){
+		if(errs) {
+			callback(errs, null);
+		} else {
+			console.log(results);   // results = [result1, result2, result3]
+			var result_1 = results[0];
+			var sensorList = results[1];
+			var mapList = results[2];//map list
+			var mapObj = {};
+			for (let i=0; i < mapList.length; ++i) {
+				mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
+			}
+			for (let j=0; j < sensorList.length; ++j) {
+				let sensor = sensorList[j];
+				sensor['device_mac'] = sensor['device_mac'].toLowerCase();
+				sensor['typeName'] = mapObj[sensor['fport']];
+			}
+			var data = {camList: result_1.device_list,
+				    	sensorList: sensorList,
+						mapList: mapList };
+			try {
+				JsonFileTools.saveJsonToFile(dataPath, data);
+			} catch (error) {
+				JsonFileTools.saveJsonToFile(dataPath, {});
+			}
+			callback(null, data);
+		}
+	});
 }

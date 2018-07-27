@@ -3,7 +3,7 @@
 /*Global Styles*/
 
 body {
-	background: #f1f4f7;
+	background: #eaeaec;
 	padding-top: 50px;
 	color: #5f6468;
 }
@@ -951,14 +951,14 @@ input[type=checkbox] {
 	width: auto;
 	height: auto;
 	border-radius: 10px;
-	background-color: #ffffff;
+	background-color: #ffffffd8;
 	padding: 13px 10px;
 }
 .BG-Average-Copy {
 	width: auto;
 	height: auto;
 	border-radius: 10px;
-	background-color: #f8f5f5;
+	background-color: #ffffffd8;
 	padding: 11px 16px 12px 17px;
 }
 

@@ -22,8 +22,9 @@
     <!--  JSCal2-1.7-->
     <script type="text/javascript" src="/vendor/JSCal2-1.7/js/jscal2.js"></script>
     <script type="text/javascript" src="/vendor/JSCal2-1.7/js/lang/b5.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <!-- Self-define-->
-    <% if(title === 'Index' ){ %>
+    <% if(title === 'Index'){ %>
        <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
        <script type="text/javascript" src="js/bootstrap-transfer.js"></script>
        <script type="text/javascript" src="vendor/icheck-1.x/icheck.min.js" ></script>
@@ -34,6 +35,11 @@
        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
        <script type="text/javascript" src="/js/utils.js"></script>
        <script type="text/javascript" src="js/myIndex.js" ></script>
+    <% }else if(title === 'Control'){ %>
+       <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+       <script type="text/javascript" src="/js/jquery-ui.min.js"></script>
+       <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+       <script type="text/javascript" src="js/myControl.js" ></script>
     <% }else if(title === 'Account'){ %>
         <!--  jqplot -->
         <script type="text/javascript" src="js/myAccount.js" ></script>

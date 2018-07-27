@@ -14,6 +14,8 @@ var sensorList = JSON.parse(document.getElementById("sensorList").value);
 var profile = JSON.parse(document.getElementById("profile").value);
 var cam1 = camList[0]['gid'];
 var sensor1, sensor_name;
+var allMacList = getMacList();
+var allMacName = getAllMacName();
 if (profile[cam1] && profile[cam1].length > 0) {
   sensor1 = profile[cam1][0];
   sensor_name = allMacName[sensor1];
@@ -21,8 +23,6 @@ if (profile[cam1] && profile[cam1].length > 0) {
   sensor1 = '';
   sensor_name = '尚未設定裝置';
 }
-var allMacList = getMacList();
-var allMacName = getAllMacName();
 // var camList = document.getElementById("camList").value;
 //Slider
 var min = 0;

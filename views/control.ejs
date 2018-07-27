@@ -1,0 +1,211 @@
+<%- include page/header %>
+
+
+      <div class="col-sm-12 col-md-4">
+        <div class="BG-Average">
+	          <nav class="navbar bg-faded btn-menu">
+	            <button type="button" class="btn btn-primary btn-all btn-block">
+	              {{currentCtrl.name}} : {{currentCtrl.sensor_mac}} {{currentCtrl.sensor_param}}
+	            </button>
+	          </nav>
+	          <center><div id="chart_div" ></div></center>
+	          <br>
+        </div>
+      </div><!--/.col-->
+      <div class="col-sm-12 col-md-8">
+        <div class="BG-Average-Copy">
+
+			<div v-show="isSetting">
+			    <div v-if="!isEdit">
+					<h1>新增控制設定</h1>
+				</div>
+
+				<div v-else>
+					<h1>編輯控制設定</h1>
+				</div>
+				<hr>
+				<div class="row">
+
+					<div class="col-sm-3 col-md-2">
+						<label>設定控制名稱 : </label>
+					</div>
+					<div class="col-sm-9 col-md-10">
+						<input type="text" v-model="ctrl.name" placeholder="請輸入名稱">
+					</div>
+					<br>
+					<br>
+					<div class="col-sm-3 col-md-2">
+						<label>控制設備MAC : </label>
+					</div>
+					<div class="col-sm-9 col-md-10">
+						<input type="text" v-model="ctrl.switch_mac" placeholder="請輸入MAC">
+					</div>
+					<br>
+					<br>
+					<div class="col-sm-3 col-md-2">
+						<label>選擇感測裝置 : </label>
+					</div>
+					<div class="col-sm-9 col-md-10">
+						<select v-model="ctrl.sensor_mac" @change="selectProfileSensor">
+							<option v-for="sensor in sensorList" v-bind:value="sensor.device_mac">
+								{{ sensor.device_name }} - {{ sensor.typeName }}
+							</option>
+						</select>
+					</div>
+					<br>
+					<br>
+
+					<div v-if="params.length > 0">
+						<div class="col-sm-3 col-md-2">
+							<label>選擇控制參數 : </label>
+						</div>
+						<div class="col-sm-9 col-md-10">
+							<select v-model="ctrl.sensor_param" @change="selectProfileParam">
+								<option v-for="param in params" v-bind:value="param">
+									{{ param}}
+								</option>
+							</select>
+						</div>
+						<br>
+					    <br>
+
+					</div>
+
+					<div class="col-sm-12 col-md-12">
+					    <label class="radio-inline"><input type="radio" v-bind:value="a" v-model="ctrl.switch_on_radio" checked>高於</label>
+						<label class="radio-inline"><input type="radio" v-bind:value="b" v-model="ctrl.switch_on_radio">低於</label>
+						<input type="number" v-model="ctrl.switch_on" placeholder="">
+						開啟
+					</div>
+
+					<br>
+					<br>
+
+					<div class="col-sm-12 col-md-12">
+					    <label class="radio-inline"><input type="radio" v-bind:value="a" v-model="ctrl.switch_off_radio" checked>高於</label>
+						<label class="radio-inline"><input type="radio" v-bind:value="b" v-model="ctrl.switch_off_radio">低於</label>
+						<input type="number" v-model="ctrl.switch_off" placeholder="">
+						關閉
+					</div>
+
+				</div>
+
+				<hr>
+                <div class="row">
+					<div class="col-md-3"></div>
+					<div class="col-sm-2">
+						<button  type="button" @click="cancelSetting">
+						    <span class="fa fa-times fa-3x"></span>
+						    取消
+						</button>
+				  </div>
+				  <div class="col-sm-2">
+					    <button  type="button" class="btn btn-primary" @click="setting">
+						    <span class="fa fa-pencil fa-2x"></span>
+							  設定
+						</button>
+				  </div>
+				</div>
+
+		    </div>
+		    <div v-show="!isSetting">
+		        <div v-show="ctrlNameList.length > 0">
+					<button v-for="(name, $index) in ctrlNameList" type="button" class="btn btn-default" @click="selectCtrlByName(name,$index)">
+						{{name}}
+					</button>
+				</div>
+				<hr>
+				<div class="row">
+					<div class="col-sm-12 col-md-6">
+                        <h2>自動控制設定</h2>
+                        <div class="col-sm-5 col-md-5">
+							<label>設定控制名稱 : </label>
+						</div>
+						<div class="col-sm-7 col-md-7">
+							<input type="text" v-model="currentCtrl.name" disabled>
+						</div>
+						<br>
+					<br>
+					<div class="col-sm-5 col-md-5">
+						<label>控制設備 : </label>
+					</div>
+					<div class="col-sm-7 col-md-7">
+						<input type="text" v-model="currentCtrl.switch_mac" disabled>
+					</div>
+					<br>
+					<br>
+					<div class="col-sm-5 col-md-5">
+						<label>感測裝置 : </label>
+					</div>
+					<div class="col-sm-7 col-md-7">
+						<input type="text" v-model="currentCtrl.sensor_mac" disabled>
+					</div>
+					<br>
+					<br>
+
+					<div class="col-sm-5 col-md-5">
+						<label>選擇控制參數 : </label>
+					</div>
+					<div class="col-sm-7 col-md-7">
+						<input type="text" v-model="currentCtrl.sensor_param" disabled>
+					</div>
+					<br>
+				    <br>
+
+					<div class="col-sm-12 col-md-12">
+					    <label v-if="currentCtrl.switch_on_radio=='high'">高於</label>
+						<label v-else>低於</label>
+						<input type="number" v-model="currentCtrl.switch_on" disabled>
+						開啟
+					</div>
+
+					<br>
+					<br>
+
+					<div class="col-sm-12 col-md-12">
+					    <label v-if="currentCtrl.switch_off_radio=='high'">高於</label>
+						<label v-else>低於</label>
+						<input type="number" v-model="currentCtrl.switch_off" disabled>
+						關閉
+					</div>
+					</div>
+					<div class="col-sm-6 col-md-3">
+						<h2>手動控制</h2>
+						<div class="col-sm-12 col-md-12">
+							<button  type="button" class="btn btn-danger" @click="swichon">
+							    <span class="fa fa-circle-o  fa-3x"></span>
+							    開啟
+							</button>
+					    </div>
+					    <br>
+						<br>
+						<br>
+						<br>
+					    <div class="col-sm-12 col-md-12">
+							<button  type="button" class="btn btn-primary" @click="swichoff">
+							    <span class="fa fa-times  fa-3x"></span>
+							    關閉
+							</button>
+					    </div>
+					</div>
+					<div v-show="isActive" class="col-sm-6 col-md-3">
+						<h2>&nbsp;</h2>
+						<label>開關狀態 : </label>
+						<input type="text" v-model="status" disabled>
+						<br>
+						<br>
+						<label>記數時間 : </label>
+						<input type="text" v-model="mycounter" disabled>秒
+					</div>
+				</div>
+		    </div>
+        </div>
+      </div>
+
+	<input id="camList" name="camList" type="hidden" value="<%= JSON.stringify(camList) %>">
+	<input id="sensorList" name="sensorList" type="hidden" value="<%= JSON.stringify(sensorList) %>">
+	<input id="mapList" name="mapList" type="hidden" value="<%= JSON.stringify(mapList) %>">
+	<input id="profile" name="profile" type="hidden" value="<%= JSON.stringify(profile) %>">
+	<input id="final" name="final" type="hidden" value="<%= JSON.stringify(final) %>">
+
+<%- include page/footer %>

@@ -7,6 +7,7 @@ var cloud = require('../models/cloud.js');
 var myapi =  require('../models/myapi.js');
 var deviceListPath = './public/data/deviceList.json';
 var profilePath = './public/data/profile.json';
+var autoPath = './public/data/auto.json';
 var schedule = require('node-schedule');
 var jobs = {};
 var test = false;
@@ -163,6 +164,31 @@ router.route('/setting')
 			profileObj = {};
 		}
 		return res.json(profileObj);
+	});
+
+	router.route('/ctrlSetting')
+
+	// get all the bears (accessed at GET http://localhost:8080/api/bears)
+	.get(function(req, res) {
+		var ctrl = JSON.parse(req.query.ctrl);
+		var name = ctrl.name;
+		console.log(typeof ctrl);
+		var autoObj;
+		try {
+			autoObj = JsonFileTools.getJsonFromFile(autoPath);
+			if (autoObj == undefined || autoObj  == null) {
+				autoObj  = {};
+			}
+		} catch (error) {
+			autoObj  = {};
+		}
+		autoObj[name] = ctrl;
+		try {
+			JsonFileTools.saveJsonToFile(autoPath, autoObj);
+		} catch (error) {
+			autoObj = {};
+		}
+		return res.json(autoObj);
 	});
 
 router.route('/device_list')
