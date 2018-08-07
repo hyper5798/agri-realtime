@@ -105,22 +105,25 @@ var app = new Vue({
       // alert(JSON.stringify(this.ctrl));
 　　 },
     enableSetting: function() {
+      if(this.ctrlNameList.length === 0) {
+        this.isEdit = false;
+      } else {
+        this.isEdit = true;
+      }
       this.isSetting = true;
-      this.isEdit = true;
       this.ctrl = this.currentCtrl;
     },
-   newSetting: function() {
+    newSetting: function() {
       this.isEdit = false;
       this.ctrl = emptyData;
     },
     editSetting: function() {
+      if(this.ctrlNameList.length === 0) {
+        alert('尚未設定自動控制!');
+        return;
+      }
       this.isEdit = true;
       this.ctrl = this.currentCtrl;
-    },
-    delSetting: function() {
-      this.isSetting = false;
-      this.ctrl = this.currentCtrl;
-      toDelSetting(this.ctrl.name);
     },
     selectProfileSensor: function(ele) {
       var mac = ele.target.value.toLowerCase();
@@ -133,11 +136,17 @@ var app = new Vue({
     setting: function() {
       toSetting(this.ctrl);
     },
+    delSetting: function() {
+      this.isSetting = false;
+      this.ctrl = this.currentCtrl;
+      toDelSetting(this.ctrl.name);
+    },
     selectCtrlByName: function(name,$index) {
       this.currentCtrl = getCtrlByName(name);
       /*if (this.currentCtrl) {
         alert('currentCtrl: ' + JSON.stringify(this.currentCtrl));
       }*/
+      // alert('currentCtrl name : ' + name + '\n' + JSON.stringify(this.currentCtrl));
     },
     swichon: function(name,$index) {
       // alert('swichon');
@@ -284,7 +293,25 @@ function loadDoc(queryType,url) {
               app.isSetting = false;
               console.log('delSetting');
               profile = json;
-              console.log('setting profile :\n' + JSON.stringify(profile));
+              console.log('delSetting :\n' + typeof(json));
+              pList = Object.keys(profile);
+              console.log(pList);
+              if (pList.length > 0) {
+                app.ctrlNameList = pList;
+                app.currentCtrl = getInitCtrl(pList);
+              } else {
+                app.ctrlNameList = [];
+                app.currentCtrl = emptyData;
+                app.ctrl = emptyData;
+              }
+              console.log('app.ctrl : ' + JSON.stringify(app.ctrl));
+              console.log('app.currentCtrl : ' + JSON.stringify(app.currentCtrl));
+              if(app.ctrlNameList.length === 0) {
+                app.isSetting = true;
+                app.isEdit = false;
+              } else {
+                app.isEdit = true;
+              }
             }
         }
     }
@@ -360,12 +387,12 @@ $(document).ready(function(){
 
 function drawChart() {
   console.log('drawChart ----------------------- start');
-  var ctrl = app.currentCtrl;
-  var sensor = ctrl.sensor_mac;
+  var myctrl = app.currentCtrl;
+  var sensor = myctrl.sensor_mac;
   if (sensor == '') {
     app.isSetting = true;
   }
-  var param = ctrl.sensor_param;
+  var param = myctrl.sensor_param;
   console.log('sensor : ' + sensor);
   console.log('param : ' + param);
   console.log(final);
@@ -402,11 +429,11 @@ function drawChart() {
   chart.draw(chartData, options);
 }
 
-function changGaugeData(ctrl, data) {
+function changGaugeData(mctrl, data) {
   // alert(JSON.stringify(ctrl));
   final[data.macAddr] = data;
-  var sensor = ctrl.sensor_mac;
-  var param = ctrl.sensor_param;
+  var sensor = mctrl.sensor_mac;
+  var param = mctrl.sensor_param;
   var msg = final[sensor];
   if ( msg == undefined || msg == null || msg.information == undefined) {
     //alert('目前設定尚未有' + param + '資料!');
@@ -473,6 +500,8 @@ function getInitCtrl (list) {
 }
 
 function getCtrlByName (name) {
+ // console.log('getCtrlByName(' + name + ')');
+  // console.log(JSON.stringify(profile));
   if (profile[name]) {
     return profile[name];
   } else {

@@ -14,7 +14,7 @@
       </div><!--/.col-->
       <div class="col-sm-12 col-md-8">
         <div class="BG-Average-Copy">
-
+<!-- profile setting -->
 			<div v-show="isSetting">
 			    <div v-if="!isEdit">
 					<h1>新增控制設定</h1>
@@ -114,14 +114,14 @@
 						</button>
 				  </div>
 				  <div class="col-sm-2">
-					    <button  type="button" class="btn btn-danger" @click="delSetting">
+					    <button  v-show="isEdit" type="button" class="btn btn-danger" @click="delSetting">
 						    <span class="fa fa-trash fa-2x"></span>
 							  刪除
 						</button>
 				  </div>
 				</div>
-
 		    </div>
+<!-- Show profile -->
 		    <div v-show="!isSetting">
 		        <div v-show="ctrlNameList.length > 0">
 					<button v-for="(name, $index) in ctrlNameList" type="button" class="btn btn-default" @click="selectCtrlByName(name,$index)">
