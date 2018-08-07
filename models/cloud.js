@@ -62,14 +62,14 @@ function download (uri, filename, callback){
           stream.pipe(
               fs.createWriteStream(filename)
                   .on('error', function(err){
-                      //callback(error, filename);
+                    return callback(error, filename);
                       console.log('???? fs.createWriteStream err')
                       console.log(err)
                       // stream.read();
                   })
               )
           .on('close', function() {
-              callback(null, filename);
+            return callback(null, filename);
           });
       }
     });
@@ -91,14 +91,14 @@ function checkAndGetToken(callback) {
         getToken(function(err, result){
             if(err){
                 JsonFileTools.saveJsonToFile(sessionPath,{});
-                callback(err, null);
+                return callback(err, null);
             }else{
                 JsonFileTools.saveJsonToFile(sessionPath,result);
-                callback(err, result);
+                return callback(err, result);
             }
         })
     } else {
-        callback(null, mySession);
+        return callback(null, mySession);
     }
 }
 
@@ -140,14 +140,14 @@ function getDeviceList(callback) {
     }*/
     checkAndGetToken(function(err, session) {
         if (err) {
-            callback(err, null);
+            return callback(err, null);
         } else {
             sendDeviceListRequest(session, function(err, result){
                 if(err == 1427){
                     JsonFileTools.saveJsonToFile(sessionPath,{});
-                    callback(err, null);
+                    return callback(err, null);
                 } else {
-                    callback(null, result);
+                    return callback(null, result);
                 }
             }); 
         }
@@ -167,7 +167,7 @@ function sendDeviceListRequest(session, callback) {
     request.post(url,{form:form},
         function(err, result) {
             if(err) {
-                callback(err, null);
+                return callback(err, null);
             }
             else {
                 //console.log('flag : '+flag);
@@ -175,12 +175,12 @@ function sendDeviceListRequest(session, callback) {
                 var json= JSON.parse(result.body);
                 var status = json.status;
                 if(status.code == 1427) {
-                    callback(status.code, false);
+                    return callback(status.code, false);
                 } else if(json.device_list == undefined) {
-                    callback(null, false);
+                    return callback(null, false);
                 }
                 else {
-                    callback(null, json);
+                    return callback(null, json);
                 }
             }
     });
@@ -190,7 +190,7 @@ function getEventList(gid, endTime, callback) {
     var url = server + settings.get_event_list;
     checkAndGetToken(function(err, session) {
         if (err) {
-            callback(err, null);
+            return callback(err, null);
         } else {
             var token = session.token;
             // request time range “HOUR”, “DAY”, “WEEK”, “MONTH”
@@ -202,7 +202,7 @@ function getEventList(gid, endTime, callback) {
                 function(err, result) {
                     if(err) {
                         console.log('getEventList  request.post error : ' + err);
-                        callback(err, null);
+                        return callback(err, null);
                     }
                     else {
                         //console.log('flag : '+flag);
@@ -215,10 +215,10 @@ function getEventList(gid, endTime, callback) {
         
                         if(status.code !== 1232){
                             console.log('getEventList  request.post : ' + status.message);
-                            callback(status.message, null);
+                            return callback(status.message, null);
                         } else {
                             console.log('getEventList  request.post : ' + list.length);
-                            callback(null, list);
+                            return callback(null, list);
                         }
                     }
             }); 
@@ -241,15 +241,15 @@ function store(title, content, city,area,town,callback) {
                              api_key:api_key,api_token:api_token, time:time }},
         function(err, result) {
             if(err) {
-                callback(err, null);
+                return callback(err, null);
             }
             else {
                 var value = JSON.parse(result.body).value
                 if(value == undefined) {
-                    callback(null, false)
+                    return callback(null, false)
                 }
                 else {
-                    callback(null, value)
+                    return callback(null, value)
                 }
             }
     });
@@ -281,7 +281,7 @@ function getPlayList(gid, endDate, callback) {
     console.log(endDate);
     getEventList(gid, endDate, function(err,list){
         if (err) {
-            callback(err, null);
+            return callback(err, null);
         } else {
             /*for (let i=0; i < list.length; ++i) {
                 let obj = list[i];
@@ -297,7 +297,7 @@ function getPlayList(gid, endDate, callback) {
                 else
                     console.log('???? asyncDownloadImage : ' + result);
             })
-            callback(null, list);
+            return callback(null, list);
         }
     });
 }
@@ -307,7 +307,7 @@ function asyncDownloadImage (gid, list, callback) {
     JsonFileTools.mkdir(folderPath);
     let length = list.length;
     if (length == 0) {
-        callback('no event list', null);
+        return callback('no event list', null);
     }
     let index = 0;
     async.forever(function(next){
@@ -327,9 +327,9 @@ function asyncDownloadImage (gid, list, callback) {
             }
             next(err);
             if(err === 'finish') {
-              callback(null , 'downlod finished');
+                return callback(null , 'downlod finished');
             } else if(err) {
-              callback(err, null);
+                return callback(err, null);
             }
         });
 
@@ -378,7 +378,7 @@ function query(mac, startDate, endDate , index, limit, flag, callback) {
     request.post(url,{form:form},
         function(err, result) {
             if(err) {
-                callback(err, null);
+                return callback(err, null);
             }
             else {
                 //console.log('flag : '+flag);
@@ -406,10 +406,10 @@ function query(mac, startDate, endDate , index, limit, flag, callback) {
                 }
 
                 if(arrList == undefined) {
-                    callback(null, false)
+                    return callback(null, false)
                 }
                 else {
-                    callback(null,json)
+                    return callback(null,json)
                 }
             }
     });

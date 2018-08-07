@@ -13,25 +13,6 @@ var sensorList = JSON.parse(document.getElementById("sensorList").value);
 var mapList = JSON.parse(document.getElementById("mapList").value);
 var profile = JSON.parse(document.getElementById("profile").value);
 var final = JSON.parse(document.getElementById("final").value);
-var pList = Object.keys(profile);
-var ctrl1 = getInitCtrl(pList);
-var typeMapObj = getTypeMap();
-var cam1 = camList[0]['gid'];
-var sensor1, sensor_name;
-var socket = io.connect('http://localhost:8080');
-var socketId = null;
-if (profile[cam1] && profile[cam1].length > 0) {
-  sensor1 = profile[cam1][0];
-  sensor_name = allMacName[sensor1];
-} else {
-  sensor1 = '';
-  sensor_name = '尚未設定裝置';
-}
-var allMacList = getMacList();
-var allMacName = getAllMacName();
-// var camList = document.getElementById("camList").value;
-//For chart
-var chart;
 var emptyData =  {
       name: '',
       switch_mac: '',
@@ -39,7 +20,9 @@ var emptyData =  {
       sensor_param: '',
       switch_on: '',
       switch_on_radio: 'high',
+      switch_on_cmd: '010F0000000801013F55',
       switch_off: '',
+      switch_off_cmd: '010F000000080100FE95',
       switch_off_radio: 'high',
     };
 
@@ -53,6 +36,44 @@ var testData = {
       switch_off: '20',
       switch_off_radio: 'high',
     };
+var pList = Object.keys(profile);
+var ctrl1 = getInitCtrl(pList);
+var typeMapObj = getTypeMap();
+var cam1 = camList[0]['gid'];
+var sensor1, sensor_name;
+var socket = io.connect('http://localhost:8080');
+var socketId = null;
+var chartData, options;
+if (profile[cam1] && profile[cam1].length > 0) {
+  sensor1 = profile[cam1][0];
+  sensor_name = allMacName[sensor1];
+} else {
+  sensor1 = '';
+  sensor_name = '尚未設定裝置';
+}
+var allMacList = getMacList();
+var allMacName = getAllMacName();
+// var camList = document.getElementById("camList").value;
+//For chart
+var chart;
+
+var tempOptions = {
+    width: 250, height: 250,
+    redFrom: 30, redTo: 40,
+    yellowFrom:20, yellowTo: 30,
+    minorTicks: 5,
+    max:40,
+    min: 0
+  };
+
+var humOptions = {
+    width: 250, height: 250,
+    redFrom: 80, redTo: 100,
+    yellowFrom:50, yellowTo: 80,
+    minorTicks: 5,
+    max:100,
+    min: 0
+  };
 
 var app = new Vue({
   el: '#app',
@@ -71,7 +92,7 @@ var app = new Vue({
     params: [],
     a: 'high',
     b: 'low',
-    ctrl: testData,
+    ctrl: emptyData,
     ctrlNameList: pList,
     currentCtrl: ctrl1,
     status: '',
@@ -85,12 +106,21 @@ var app = new Vue({
 　　 },
     enableSetting: function() {
       this.isSetting = true;
+      this.isEdit = true;
+      this.ctrl = this.currentCtrl;
     },
    newSetting: function() {
       this.isEdit = false;
+      this.ctrl = emptyData;
     },
     editSetting: function() {
-      this.isEdit = true;s
+      this.isEdit = true;
+      this.ctrl = this.currentCtrl;
+    },
+    delSetting: function() {
+      this.isSetting = false;
+      this.ctrl = this.currentCtrl;
+      toDelSetting(this.ctrl.name);
     },
     selectProfileSensor: function(ele) {
       var mac = ele.target.value.toLowerCase();
@@ -173,7 +203,7 @@ function getTypeMap() {
       }
     }
   }
-  console.log(JSON.stringify(obj))
+  // console.log(JSON.stringify(obj))
   return obj;
 }
 
@@ -221,6 +251,13 @@ function toSetting(ctrl){
   loadDoc("setting",url);
 }
 
+function toDelSetting(name){
+  console.log('toDelSetting : ' + name);
+  var url = 'http://'+host+":"+port+'/todos/delSetting?name='+name;
+  console.log(url);
+  loadDoc("delSetting",url);
+}
+
 function loadDoc(queryType,url) {
   console.log('loadDoc()');
   var xhttp = new XMLHttpRequest();
@@ -238,9 +275,14 @@ function loadDoc(queryType,url) {
             console.log('json  : '+JSON.stringify(json));
             if(queryType === 'query'){
                 console.log('Show query list');
-            } else if(queryType === 'setting'){
+            } else if (queryType === 'setting') {
               app.isSetting = false;
               console.log('Settiong profile');
+              profile = json;
+              console.log('setting profile :\n' + JSON.stringify(profile));
+            } else if (queryType === 'delSetting') {
+              app.isSetting = false;
+              console.log('delSetting');
               profile = json;
               console.log('setting profile :\n' + JSON.stringify(profile));
             }
@@ -289,24 +331,102 @@ $(document).ready(function(){
     host = window.location.hostname;
     port = window.location.port;
     init();
+    socket.on('connect',function(){
+    socketId = socket.id;
+      console.log('connection socketId : ' + socketId);
+    });
+
+
+    socket.on('news', function (data) {
+      console.log('cnews -------------------');
+      console.log(data);
+      socket.emit('my other event', { my: 'data' });
+    });
+
+    socket.on('command_response', function (data) {
+      console.log('command_response -------------------');
+      console.log(data);
+    }); // update_status
+
+    socket.on('update_status', function (data) {
+      console.log('update_sensor_status -------------------');
+      console.log(typeof data);
+      console.log(data);
+      changGaugeData(app.currentCtrl, data)
+    });
+
+    // changGaugeData(app.currentCtrl);
 });
 
 function drawChart() {
-  var  chartData = google.visualization.arrayToDataTable([
-      ['Label', 'Value'],
-      ['溫度', Math.round(30)]
-    ]);
+  console.log('drawChart ----------------------- start');
+  var ctrl = app.currentCtrl;
+  var sensor = ctrl.sensor_mac;
+  if (sensor == '') {
+    app.isSetting = true;
+  }
+  var param = ctrl.sensor_param;
+  console.log('sensor : ' + sensor);
+  console.log('param : ' + param);
+  console.log(final);
+  var msgObj = final[sensor];
+  console.log(final[sensor]);
+  if (  msgObj == undefined ||  msgObj == null ||  msgObj.information == undefined) {
+    chartData = google.visualization.arrayToDataTable([
+        ['Label', 'Value'],
+        ['溫度', Math.round(30)]
+      ]);
+    options = tempOptions;
+  } else {
+    var value = (msgObj.information)[param];
+    console.log('value : ' + value);
+    console.log('drawChart ----------------------- end');
+    chartData = google.visualization.arrayToDataTable([
+        ['Label', 'Value'],
+        [param, Math.round(value)]
+      ]);
 
-  var options = {
-    width: 250, height: 250,
-    redFrom: 30, redTo: 40,
-    yellowFrom:25, yellowTo: 30,
-    minorTicks: 5,
-    max:40,
-    min: 0
-  };
+
+    if (value) {
+       chartData.setValue(0, 0, param);
+       chartData.setValue(0, 1, Math.round(value));
+    }
+    if (param == '水份' || param == '濕度') {
+      options = humOptions;
+    } else if (param == '溫度') {
+      options = tempOptions;
+    }
+  }
 
   chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+  chart.draw(chartData, options);
+}
+
+function changGaugeData(ctrl, data) {
+  // alert(JSON.stringify(ctrl));
+  final[data.macAddr] = data;
+  var sensor = ctrl.sensor_mac;
+  var param = ctrl.sensor_param;
+  var msg = final[sensor];
+  if ( msg == undefined || msg == null || msg.information == undefined) {
+    //alert('目前設定尚未有' + param + '資料!');
+  }
+  var value = (msg.information)[param];
+  console.log('changGaugeData ----------------------- start');
+  console.log('sensor : ' + sensor);
+  console.log('param : ' + param);
+  console.log('value : ' + value);
+  console.log('changGaugeData ----------------------- end');
+  if (value) {
+     chartData.setValue(0, 0, param);
+     chartData.setValue(0, 1, Math.round(value));
+  }
+  if (param == '水份' || param == '濕度') {
+    options = humOptions;
+  } else if (param == '溫度') {
+    options = tempOptions;
+  }
+
   chart.draw(chartData, options);
 }
 
@@ -332,7 +452,7 @@ function getAllMacName() {
       obj[sensor.device_mac.toLowerCase()] = sensor.device_name;
       // alert(JSON.stringify(obj));
   }
-  console.log('getAllMacName() : ' + JSON.stringify(obj));
+  // console.log('getAllMacName() : ' + JSON.stringify(obj));
   return obj;
 }
 
@@ -348,6 +468,7 @@ function getInitCtrl (list) {
   } else {
     tmpCtrl = emptyData;
   }
+  console.log('**** InitCtrl : ' + JSON.stringify(tmpCtrl));
   return  tmpCtrl;
 }
 
@@ -359,22 +480,11 @@ function getCtrlByName (name) {
   }
 }
 
-socket.on('connect',function(){
-  socketId = socket.id;
-  console.log('connection socketId : ' + socketId);
-});
-
-
-socket.on('news', function (data) {
-  console.log(data);
-  socket.emit('my other event', { my: 'data' });
-});
-
-socket.on('command_response', function (data) {
-  console.log(data);
-});
-
 
 function sendswitchCommand(mac, cmd) {
+  if (mac == undefined) {
+    alert('尚未加入控制開關模組MAC!');
+    return;
+  }
   socket.emit('switch_command', { mac: mac, cmd: cmd });
 }

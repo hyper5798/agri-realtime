@@ -27,5 +27,8 @@ module.exports = {
   mqttName: 'gemtek',
   mqttPassword: "gemtek12345",
   mqttHost: "161.202.32.59",
-  mqttPort: "1883"
+  mqttPort: "1883",
+  mytopic: "GIOT-GW/UL/+",
+  //Zone
+  timezone: 'Asia/Taipei'
 };

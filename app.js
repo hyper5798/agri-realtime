@@ -17,6 +17,9 @@ var flash = require('connect-flash');
 var cors = require('cors');
 var UserDbTools =  require('./models/userDbTools.js');
 var mqttClient =  require('./models/mqttClient.js');
+var mqttSubClient =  require('./models/mqttSubClient.js');
+var JsonFileTools =  require('./models/jsonFileTools.js');
+var finalPath = './public/data/final.json';
 var mySocket = null;
 //Jason add on 2017.02.16 - end
 var app = express();
@@ -69,7 +72,7 @@ server.listen(port);
 var io = require('socket.io').listen(server.listen(port));
 
 io.sockets.on('connection', function (socket) {
-  mySocket = socket;
+  // mySocket = socket;
   // socket.emit() ：向建立该连接的客户端广播
   // socket.broadcast.emit() ：向除去建立该连接的客户端的所有客户端广播
   // io.sockets.emit() ：向所有客户端广播，等同于上面两个的和
@@ -85,6 +88,27 @@ io.sockets.on('connection', function (socket) {
     var topic = 'GIOT-GW/DL/00001c497b432155';
     mqttClient.sendMessage(topic, message);
   });
+
+  socket.on('mqtt_sub', function (data) {
+    console.log(data);
+  });//send_switch_command
+
+  socket.on('send_switch_command', function (data) {
+    console.log('send_switch_command : ' + JSON.stringify(data));
+    var mac = data.mac;
+    var switch_mac = data.switch_mac;
+    var cmd = data.command;
+    var gwid = data.gwid;
+    let tmp = {"macAddr": switch_mac,"data": cmd,"id":"1111111111","extra":{"port":1,"txpara":"22"}};
+    var message = JSON.stringify([tmp]);
+    var topic = 'GIOT-GW/DL/'+ gwid;
+    mqttClient.sendMessage(topic, message);
+  });
+
+  socket.on('update_sensor_status', function (data) {
+    socket.broadcast.emit('update_status', data);
+  });
+
   socket.on('disconnect', function () {
     console.log('???? socket disconnect id : ' + socket.id);
   });

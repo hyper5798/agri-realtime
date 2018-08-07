@@ -100,13 +100,13 @@ function getDeviceList(callback) {
     //先取得裝置列表時進行token確認,getMapList就無須檢查
     checkAndGetToken(function(err, session) {
         if (err) {
-            call(err, null);
+            return callback(err, null);
         } else {
             sendDeviceListRequest(session, function(err, result){
                 if(err){
-                    callback(err, null);
+                    return callback(err, null);
                 } else {
-                    callback(null, result);
+                    return callback(null, result);
                 }
             });
         }
@@ -141,9 +141,9 @@ function sendMapListRequest(session, callback) {
             var code = json.responseCode;
             var msg = json.responseMsg;
             if (code == '000') {
-                callback(error, json.data);
+                return callback(error, json.data);
             } else {
-                callback(msg, null);
+                return callback(msg, null);
             }
         }
         else{
@@ -153,7 +153,7 @@ function sendMapListRequest(session, callback) {
             console.log('Code : ' + code);
             console.log('error : ' + error);
             console.log('body : ' + body);
-            callback(error, null);
+            return callback(error, null);
         }
     });
 }
@@ -174,9 +174,9 @@ function sendDeviceListRequest(session, callback) {
             var code = json.responseCode;
             var msg = json.responseMsg;
             if (code == '000') {
-                callback(error, json.mList);
+                return callback(error, json.mList);
             } else {
-                callback(msg, null);
+                return callback(msg, null);
             }
         }
         else{
@@ -187,9 +187,9 @@ function sendDeviceListRequest(session, callback) {
                 console.log('Code : ' + code);
                 console.log('error : ' + error);
                 console.log('body : ' + body);
-                callback(error, null);
+                return callback(error, null);
             } else {
-                callback( 'no response', null);
+                return callback( 'no response', null);
             }
         }
     });
@@ -227,15 +227,15 @@ function getEventList(mac, startDate, endDate, callback) {
     
     checkAndGetToken(function(err, session) {
         if (err) {
-            call(err, null);
+            return callback(err, null);
         } else {
             var token = session.token;
             form.token = token;
             sendEventListRequest(form, function(err, result){
                 if(err){
-                    callback(err, null);
+                    return callback(err, null);
                 } else {
-                    callback(null, result);
+                    return callback(null, result);
                 }
             });
         }

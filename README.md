@@ -1,6 +1,6 @@
 # msgAdmin
 
-Combine CVR snapshot and sensor data line chart for agriculture demo
+Combine CVR snapshot with sensor data line chart and  auto switch for agriculture demo
 
 ## Quick Start
 

@@ -134,7 +134,7 @@ function saveStringToFile(mpath,mstring){
     console.log("Debug jsonFileTools saveFile -> path: "+ mpath);
     //console.log("Debug jsonFileTools saveFile -> string: "+ mstring);
     //var json = JSON.stringify(obj);
-    fs.writeFile(mpath, mstring, 'utf8');
+    fs.writeFileSync(mpath, mstring, 'utf8');
     console.log("\n *START* \n");
     //var content = fs.readFileSync(mpath);
     //console.log("Output Content : \n"+ content);
@@ -143,12 +143,7 @@ function saveStringToFile(mpath,mstring){
 function saveJaonFile(path,obj){
     console.log("Debug jsonFileTools saveFile -> path: "+ path);
     var json = JSON.stringify(obj);
-    fs.writeFile(path, json, 'utf8', function (err) {
-        if (err) {
-            return console.log(err);
-        }
-        console.log("The file was saved!");
-    }); 
+    fs.writeFileSync(path, json, 'utf8');
 }
 
 function getJaonFile(path){
@@ -157,7 +152,7 @@ function getJaonFile(path){
         return null;
     }else{
         var text = fs.readFileSync(path, 'utf8');
-        console.log('read text :'+text);
+        // console.log('read text :'+text);
         if(text.length>0){
             var json = JSON.parse(text);
             return json;

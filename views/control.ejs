@@ -30,7 +30,8 @@
 						<label>設定控制名稱 : </label>
 					</div>
 					<div class="col-sm-9 col-md-10">
-						<input type="text" v-model="ctrl.name" placeholder="請輸入名稱">
+						<input v-if="isEdit" type="text" v-model="ctrl.name" disabled>
+						<input v-else type="text" v-model="ctrl.name" placeholder="請輸入名稱">
 					</div>
 					<br>
 					<br>
@@ -71,23 +72,30 @@
 
 					</div>
 
-					<div class="col-sm-12 col-md-12">
+					<div class="col-sm-6 col-md-6">
 					    <label class="radio-inline"><input type="radio" v-bind:value="a" v-model="ctrl.switch_on_radio" checked>高於</label>
 						<label class="radio-inline"><input type="radio" v-bind:value="b" v-model="ctrl.switch_on_radio">低於</label>
 						<input type="number" v-model="ctrl.switch_on" placeholder="">
 						開啟
 					</div>
-
-					<br>
-					<br>
-
-					<div class="col-sm-12 col-md-12">
-					    <label class="radio-inline"><input type="radio" v-bind:value="a" v-model="ctrl.switch_off_radio" checked>高於</label>
-						<label class="radio-inline"><input type="radio" v-bind:value="b" v-model="ctrl.switch_off_radio">低於</label>
-						<input type="number" v-model="ctrl.switch_off" placeholder="">
-						關閉
+					<div class="col-sm-6 col-md-6">
+					    命令 :
+						<input type="text" v-model="ctrl.switch_on_cmd" size="30">
 					</div>
 
+					<br>
+					<br>
+
+					<div class="col-sm-6 col-md-6">
+					    <label class="radio-inline"><input type="radio" v-bind:value="a" v-model="ctrl.switch_off_radio" checked>高於</label>
+						<label class="radio-inline"><input type="radio" v-bind:value="b" v-model="ctrl.switch_off_radio">低於</label>
+						<input type="number" v-model="ctrl.switch_off">
+						關閉
+					</div>
+                    <div class="col-sm-6 col-md-6">
+					    命令 :
+						<input type="text" v-model="ctrl.switch_off_cmd" size="30">
+					</div>
 				</div>
 
 				<hr>
@@ -103,6 +111,12 @@
 					    <button  type="button" class="btn btn-primary" @click="setting">
 						    <span class="fa fa-pencil fa-2x"></span>
 							  設定
+						</button>
+				  </div>
+				  <div class="col-sm-2">
+					    <button  type="button" class="btn btn-danger" @click="delSetting">
+						    <span class="fa fa-trash fa-2x"></span>
+							  刪除
 						</button>
 				  </div>
 				</div>

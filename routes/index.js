@@ -49,6 +49,7 @@ module.exports = function(app) {
   app.get('/', function (req, res) {
 	var profileObj;
 	try {
+		JsonFileTools.saveJsonToFile(dataPath, {});
 		profileObj = JsonFileTools.getJsonFromFile(profilePath);
 		if (profileObj == null) {
 			profileObj = {};
@@ -348,16 +349,16 @@ function getData(callback) {
 		if (data == undefined || data == null || data.mapList === undefined) {
 			getCloudData(function(err, result){
 				if(err){
-					callback(err, {});
+					return callback(err, {});
 				}
-				callback(null, result);
+				return callback(null, result);
 			})
 		} else {
-			callback(null, data);
+			return callback(null, data);
 		}
 	} catch (error) {
 		JsonFileTools.saveJsonToFile(dataPath, {});
-		callback(error, {});
+		return callback(error, {});
 	}
 }
 
@@ -380,7 +381,7 @@ function getCloudData(callback) {
 		}
 	], function(errs, results){
 		if(errs) {
-			callback(errs, null);
+			return callback(errs, null);
 		} else {
 			console.log(results);   // results = [result1, result2, result3]
 			var result_1 = results[0];
@@ -403,7 +404,7 @@ function getCloudData(callback) {
 			} catch (error) {
 				JsonFileTools.saveJsonToFile(dataPath, {});
 			}
-			callback(null, data);
+			return callback(null, data);
 		}
 	});
 }

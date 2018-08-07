@@ -109,6 +109,9 @@ router.route('/query')
 			myapi.getEventList(mac, startDate, endDate,function(err,results){
 				if (err)
 				  return res.send(err);
+				var data = results.data;
+				var devices = data.sort(dynamicSort('-date'));
+				results.data = devices;
 				var value = {};
 				value[mac] = results;
 				return res.json(value);
@@ -191,6 +194,29 @@ router.route('/setting')
 		return res.json(autoObj);
 	});
 
+	router.route('/delSetting')
+
+	// get all the bears (accessed at GET http://localhost:8080/api/bears)
+	.get(function(req, res) {
+		var name = req.query.name;
+		var autoObj;
+		try {
+			autoObj = JsonFileTools.getJsonFromFile(autoPath);
+			if (autoObj == undefined || autoObj  == null) {
+				autoObj  = {};
+			}
+		} catch (error) {
+			autoObj  = {};
+		}
+		delete autoObj[name];
+		try {
+			JsonFileTools.saveJsonToFile(autoPath, autoObj);
+		} catch (error) {
+			autoObj = {};
+		}
+		return res.json(autoObj);
+	});
+
 router.route('/device_list')
 
 	// get all the bears (accessed at GET http://localhost:8080/api/bears)
@@ -204,3 +230,14 @@ router.route('/device_list')
 
 module.exports = router;
 
+function dynamicSort(property) {
+    var sortOrder = 1;
+    if(property[0] === "-") {
+        sortOrder = -1;
+        property = property.substr(1);
+    }
+    return function (a,b) {
+        var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+        return result * sortOrder;
+    }
+}
