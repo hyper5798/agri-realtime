@@ -14,12 +14,6 @@ var dataPath = './public/data/data.json';
 var finalPath = './public/data/final.json';
 var async = require('async');
 
-myapi.getToken( function (err, result) {
-	if(err)
-	console.log(err);
-	JsonFileTools.saveJsonToFile(mysessionPath, result);
-})
-
 function findUnitsAndShowSetting(req,res,isUpdate){
 	UnitDbTools.findAllUnits(function(err,units){
 		var successMessae,errorMessae;
@@ -47,6 +41,7 @@ function findUnitsAndShowSetting(req,res,isUpdate){
 module.exports = function(app) {
   app.get('/', checkLogin);
   app.get('/', function (req, res) {
+	
 	var profileObj;
 	try {
 		JsonFileTools.saveJsonToFile(dataPath, {});
@@ -133,68 +128,30 @@ module.exports = function(app) {
 		JsonFileTools.saveJsonToFile(dataPath, {});
 	}
 	req.session.user = null;
-  	var name = req.flash('post_name').toString();
-	var successMessae,errorMessae;
-	console.log('Debug register get -> name:'+ name);
-
-	if(name ==''){
-		errorMessae = '';
-		res.render('user/login', { title: 'Login',
-			error: errorMessae
-		});
-	}else{
-		var password = req.flash('post_password').toString();
-
-		console.log('Debug register get -> password:'+ password);
-		UserDbTools.findUserByName(name,function(err,user){
-			if(err){
-				errorMessae = err;
-				res.render('user/login', { title: 'Login',
-					error: errorMessae
-				});
-			}
-			if(user == null ){
-				//login fail
-				errorMessae = 'The account is invalid';
-				res.render('user/login', { title: 'Login',
-					error: errorMessae
-				});
-			}else{
-				//login success
-				if(password == user.password){
-					req.session.user = user;
-					/*cloud.getToken(
-						function(err,session){
-							if(err){
-								JsonFileTools.saveJsonToFile(sessionPath,{});
-							}else{
-								JsonFileTools.saveJsonToFile(sessionPath,session);
-							}
-						}
-					);*/
-
-					return res.redirect('/');
-				}else{
-					//login fail
-					errorMessae = 'The password is invalid';
-					res.render('user/login', { title: 'Login',
-						error: errorMessae
-					});
-				}
-			}
-		});
-	}
+  	// var name = req.flash('post_name').toString();
+	res.render('user/login', { title: 'Login',
+		error: ''
+	});
   });
 
   app.post('/login', checkNotLogin);
   app.post('/login', function (req, res) {
   	var post_name = req.body.account;
-  	var	post_password = req.body.password;
+	var	post_password = req.body.password;
+	var successMessae,errorMessae;
   	console.log('Debug login post -> name:'+post_name);
 	console.log('Debug login post -> password:'+post_password);
-	req.flash('post_name', post_name);
-	req.flash('post_password', post_password);
-	return res.redirect('/login');
+	myapi.toLogin(post_name, post_password, function(err, result) {
+		if(err) {
+			res.render('user/login', { title: 'Login',
+				error: err
+			});
+		} else {
+			JsonFileTools.saveJsonToFile(mysessionPath, result);
+			req.session.user = result;
+			return res.redirect('/');
+		}
+	})
   });
 
   app.get('/logout', function (req, res) {
@@ -323,21 +280,22 @@ module.exports = function(app) {
 };
 
 function checkLogin(req, res, next) {
-  if (!req.session.user) {
-    req.flash('error', 'No Register!');
-    res.redirect('/login');
-  }else
-  {
-	  next();
-  }
+	if(myapi.isExpired(req.session.user)) {
+		//Expired is true
+		errorMessae = '請重新登錄!';
+		res.render('user/login', { title: 'Login',
+			error: errorMessae
+		});
+	} else {
+		next();
+	}
 }
 
 function checkNotLogin(req, res, next) {
   if (req.session.user) {
     req.flash('error', 'Have login!');
     res.redirect('back');//返回之前的页面
-  }else
-  {
+  } else {
 	  next();
   }
 }
@@ -388,14 +346,19 @@ function getCloudData(callback) {
 			var sensorList = results[1];
 			var mapList = results[2];//map list
 			var mapObj = {};
-			for (let i=0; i < mapList.length; ++i) {
-				mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
+			if(mapList) {
+				for (let i=0; i < mapList.length; ++i) {
+					mapObj[mapList[i]['deviceType']] = mapList[i]['typeName'];
+				}
 			}
-			for (let j=0; j < sensorList.length; ++j) {
-				let sensor = sensorList[j];
-				sensor['device_mac'] = sensor['device_mac'].toLowerCase();
-				sensor['typeName'] = mapObj[sensor['fport']];
+			if (sensorList) {
+				for (let j=0; j < sensorList.length; ++j) {
+					let sensor = sensorList[j];
+					sensor['device_mac'] = sensor['device_mac'].toLowerCase();
+					sensor['typeName'] = mapObj[sensor['fport']];
+				}
 			}
+			
 			var data = {camList: result_1.device_list,
 				    	sensorList: sensorList,
 						mapList: mapList };

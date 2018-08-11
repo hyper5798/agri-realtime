@@ -19,6 +19,16 @@ var tmp = [{
 var servicePath = './public/data/service.json';
 var serviceMap = JsonFileTools.getJsonFromFile(servicePath);
 
+module.exports = {
+    toLogin,
+    getToken,
+    getDeviceList,
+    getEventList,
+    getPlayList,
+    getMapList,
+    isExpired
+}
+
 function getToken(callback) {
     var url = settings.api_server + settings.api_login;
     var api_name = settings.api_name;
@@ -39,7 +49,35 @@ function getToken(callback) {
                 var time = moment();
                 time = time.add(1, 'days');
                 time = time.toDate();
-                var session = {"token": authToken, "expiration": time};
+                var session = {name:api_name, "token": authToken, "expiration": time};
+                if(code !== '000'){
+                    callback(body.responseMsg, null);
+                } else {
+                    callback(null, session);
+                }
+            }
+    });
+}
+
+function toLogin(api_name, api_pw, callback) {
+    var url = settings.api_server + settings.api_login;
+    var form = { acc:api_name, pwd: api_pw,type: 0};
+    request.post(url,{form:form},
+        function(err, result) {
+            if(err) {
+                callback(err, null);
+            }
+            else {
+                //console.log('flag : '+flag);
+                //console.log('body type : '+typeof(result.body));
+                var body= JSON.parse(result.body);
+                //console.log(JSON.stringify(body));
+                var code = body.responseCode;
+                var authToken = body.authToken;
+                var time = moment();
+                time = time.add(1, 'days');
+                time = time.toDate();
+                var session = {name:api_name,"token": authToken, "expiration": time};
                 if(code !== '000'){
                     callback(body.responseMsg, null);
                 } else {
@@ -93,6 +131,23 @@ function download (uri, filename){
         })
     } else {
         callback(null, mySession);
+    }
+}
+
+function isExpired(mySession) {
+    var hasExpiration = false;
+    if(mySession && mySession.expiration) {
+        var d = new Date(mySession.expiration);//UTC
+        //console.log(d.getTime());
+        var now = new Date();
+        //console.log(now.getTime());
+        hasExpiration = true;
+    }
+
+    if (hasExpiration == false || now.getTime() > d.getTime()) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -326,12 +381,6 @@ function getPlayList(gid, endDate, callback) {
         }
     });
 }
-
-exports.getToken = getToken;
-exports.getDeviceList = getDeviceList;
-exports.getEventList = getEventList;
-exports.getPlayList = getPlayList;
-exports.getMapList = getMapList;
 
 function dateConverter(UNIX_timestamp){
   var a = new Date(UNIX_timestamp*1000);
