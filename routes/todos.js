@@ -10,20 +10,11 @@ var profilePath = './public/data/profile.json';
 var autoPath = './public/data/auto.json';
 var schedule = require('node-schedule');
 var jobs = {};
-var test = false;
+var test = true;
+var myTime = '59 59 23 * * *';
 
-function createJob(jobid, jobtime) {
-  // *    *    *    *   *    *
-  // 秒   分   時   ㄖ   月   年
-    if (test == false) {
-		jobs[jobid] = schedule.scheduleJob(jobtime, function(){
-			// do something you want...
-			console.log('**** schedule.scheduleJob ');
-			toGetEvent(test, jobid);
-		});
-	} else {
-		toGetEvent(test, jobid);
-	}
+if(test) {
+	myTime = '00 05 11 * * *';
 }
 
 function toGetEvent(test, gid) {
@@ -71,7 +62,7 @@ function scheduleDownloadImage(){
 			for (let i=0; i < list.length; ++i) {
 				let cam = list[i];
 				let gid = cam.gid;
-				createJob(gid, '59 59 23 * * *');
+				toGetEvent(test, gid);
 				/*if (test) {
 					break;
 				}*/
@@ -86,7 +77,12 @@ function scheduleDownloadImage(){
 	});
 }
 
-scheduleDownloadImage();
+jobs['mytest'] = schedule.scheduleJob(myTime, function(){
+	// do something you want...
+	console.log('**** schedule.scheduleJob ');
+	scheduleDownloadImage();
+});
+
 
 router.route('/query')
 

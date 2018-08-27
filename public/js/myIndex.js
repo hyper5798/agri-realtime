@@ -52,7 +52,7 @@ var app = new Vue({
   data: {
     camList: camList,
     sensorList: sensorList,
-    selectedCam: cam1== undefined ? '尚未綁定' : 尚未綁定,
+    selectedCam: cam1== undefined ? '尚未綁定' : cam1,
     selectedSensor: sensor1,
     selectedCamName: cam1== undefined ? '尚未綁定IPCAM' : getCamNameByGid(cam1),
     selectedSensorName: sensor_name,

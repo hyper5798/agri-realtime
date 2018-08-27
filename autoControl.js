@@ -15,7 +15,6 @@ var session = require('express-session');
 var settings = require('./settings');
 var flash = require('connect-flash');
 var cors = require('cors');
-var UserDbTools =  require('./models/userDbTools.js');
 var mqttClient =  require('./models/mqttClient.js');
 var mqttSubClient =  require('./models/mqttSubClient.js');
 var JsonFileTools =  require('./models/jsonFileTools.js');
@@ -49,22 +48,6 @@ app.use(session({
 app.use('/todos', todos);
 routes(app);
 var server = http.createServer(app);
-
-UserDbTools.findUserByName("admin",function(err,user){
-  if(err){
-    errorMessae = err;
-    res.render('user/login', { title: 'Login',
-      error: errorMessae
-    });
-  }
-  if(user == null ){
-    UserDbTools.saveUser("admin","gemtek12345","",0,function(err,result){
-      if(err){
-        console.log('Create admin fail !');
-      }
-    });
-  }
-});
 
 server.listen(port);
 

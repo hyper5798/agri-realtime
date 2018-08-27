@@ -1,9 +1,6 @@
 module.exports = {
   cookieSecret: "mydemo",
   co:"gemteks",
-  dbhost: "localhost",
-  dbport: 27017,
-  dbpath: "mongodb://localhost/sakura",
   name: "daniel_chen@gemteks.com",
   pw: "1234567890",
   api_key : "cvr-8911839605",
