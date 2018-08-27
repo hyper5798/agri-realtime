@@ -12,11 +12,14 @@ var range;
 var camList = JSON.parse(document.getElementById("camList").value);
 var sensorList = JSON.parse(document.getElementById("sensorList").value);
 var profile = JSON.parse(document.getElementById("profile").value);
-var cam1 = camList[0]['gid'];
+var cam1;
+if (camList && camList.length > 0) {
+  cam1 = camList[0]['gid'];
+}
 var sensor1, sensor_name;
 var allMacList = getMacList();
 var allMacName = getAllMacName();
-if (profile[cam1] && profile[cam1].length > 0) {
+if (cam1 && profile[cam1] && profile[cam1].length > 0) {
   sensor1 = profile[cam1][0];
   sensor_name = allMacName[sensor1];
 } else {
@@ -33,7 +36,7 @@ var colorNames = Object.keys(window.chartColors);
 var imgArr = ['2018071500.jpg'];
 var msgArr = ['2018071500.jpg'];
 // console.log(camList);
-var tmpImg = '/data/600018691/' + imgArr[0];
+var tmpImg = '/icons/iot.jpg';
 var dataset = ['Test'];
 var datasetIndex = 0;
 var chartData = [];
@@ -42,14 +45,16 @@ var t;
 var allDataSet = [];
 var selectedSet = '';
 
+console.log('cam1 : ' + cam1);
+
 var app = new Vue({
   el: '#app',
   data: {
     camList: camList,
     sensorList: sensorList,
-    selectedCam: cam1,
+    selectedCam: cam1== undefined ? '尚未綁定' : 尚未綁定,
     selectedSensor: sensor1,
-    selectedCamName: getCamNameByGid(cam1),
+    selectedCamName: cam1== undefined ? '尚未綁定IPCAM' : getCamNameByGid(cam1),
     selectedSensorName: sensor_name,
     isSetting: false,
     isChart: true,

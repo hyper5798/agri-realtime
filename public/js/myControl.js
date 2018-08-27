@@ -39,7 +39,10 @@ var testData = {
 var pList = Object.keys(profile);
 var ctrl1 = getInitCtrl(pList);
 var typeMapObj = getTypeMap();
-var cam1 = camList[0]['gid'];
+var cam1;
+if (camList && camList.length > 0) {
+  cam1 = camList[0]['gid'];
+}
 var sensor1, sensor_name;
 var socket = io.connect('http://localhost:8080');
 var socketId = null;
@@ -80,9 +83,9 @@ var app = new Vue({
   data: {
     camList: camList,
     sensorList: sensorList,
-    selectedCam: cam1,
+    selectedCam: cam1== undefined ? '尚未綁定' : 尚未綁定,
     selectedSensor: sensor1,
-    selectedCamName: getCamNameByGid(cam1),
+    selectedCamName: cam1== undefined ? '尚未綁定IPCAM' : getCamNameByGid(cam1),
     selectedSensorName: sensor_name,
     isSetting: false,
     isEdit: false,
