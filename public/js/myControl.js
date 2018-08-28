@@ -44,7 +44,7 @@ if (camList && camList.length > 0) {
   cam1 = camList[0]['gid'];
 }
 var sensor1, sensor_name;
-var socket = io.connect('http://localhost:8080');
+var socket = io.connect('http://134.208.11.200:8080');
 var socketId = null;
 var chartData, options;
 if (profile[cam1] && profile[cam1].length > 0) {
@@ -153,7 +153,7 @@ var app = new Vue({
     },
     swichon: function(name,$index) {
       // alert('swichon');
-      sendswitchCommand(this.currentCtrl.switch_mac, '010F0000000801013F55');
+      sendswitchCommand(this.currentCtrl.switch_mac, this.currentCtrl.switch_on_cmd);
       var self = this;
       this.isActive = true;
       self.mycounter = 0;
@@ -167,7 +167,7 @@ var app = new Vue({
       // alert('swichoff');
       // this.isActive = false;
       this.status = '關閉';
-      sendswitchCommand(this.currentCtrl.switch_mac, '010F000000080100FE95');
+      sendswitchCommand(this.currentCtrl.switch_mac, this.currentCtrl.switch_off_cmd);
       clearInterval(this.pageTimer["timer1"]);
     }
   }
@@ -518,5 +518,7 @@ function sendswitchCommand(mac, cmd) {
     alert('尚未加入控制開關模組MAC!');
     return;
   }
+  console.log('switch_command : ' +  cmd);
+  console.log('switch_command : ' + JSON.stringify({ mac: mac, cmd: cmd }));
   socket.emit('switch_command', { mac: mac, cmd: cmd });
 }
